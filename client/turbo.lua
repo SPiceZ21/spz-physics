@@ -5,7 +5,7 @@ local currentBoost = 0.0
 local function UpdateBoost(vehicle, profile, currentRpm, throttle)
   if profile.turbo.type == "none" then
     currentBoost = 0.0
-    return 0.0
+    return 0.0, 1.0
   end
 
   local t = profile.turbo

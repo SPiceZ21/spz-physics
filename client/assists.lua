@@ -3,7 +3,7 @@
 local lcActive = false
 
 local function UpdateTCS(vehicle, profile, throttle)
-  if not PhysicsState or not PhysicsState.tcs_enabled then return false end
+  if not PhysicsState or not PhysicsState.tcs_enabled then return false, 1.0 end
   local tcsActive = false
 
   -- Detect driven wheel spin by comparing wheel speeds
@@ -22,6 +22,7 @@ local function UpdateTCS(vehicle, profile, throttle)
       slipMagnitude = math.max(0, rearSpeed - vehSpeed, frontSpeed - vehSpeed)
   end
 
+  local threshold = Config.TCSSlipThreshold or 0.25
   local multiplier = 1.0
   if slipMagnitude > threshold and throttle > 0.3 then
     -- Cut torque proportionally to slip magnitude

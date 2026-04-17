@@ -5,6 +5,10 @@ local function GetPowerAtRPM(rpm, curve)
   for k in pairs(curve) do table.insert(keys, k) end
   table.sort(keys)
 
+  if #keys == 0 then return 1.0 end
+  if rpm <= keys[1] then return curve[keys[1]] end
+  if rpm >= keys[#keys] then return curve[keys[#keys]] end
+
   for i = 1, #keys - 1 do
     local r0, r1 = keys[i], keys[i+1]
     if rpm >= r0 and rpm <= r1 then
@@ -12,7 +16,7 @@ local function GetPowerAtRPM(rpm, curve)
       return curve[r0] + t * (curve[r1] - curve[r0])
     end
   end
-  return 0.0
+  return 1.0
 end
 
 local function CalculateRPM(vehicle, profile)

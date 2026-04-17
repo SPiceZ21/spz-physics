@@ -24,10 +24,12 @@ CreateThread(function()
             
             -- 2. Turbo Simulation
             local boost, boostMult = SPZTurbo.UpdateBoost(vehicle, profile, PhysicsState.rpm, throttle)
-            PhysicsState.boost_bar = boost
-            
+            boostMult = boostMult or 1.0
+            PhysicsState.boost_bar = boost or 0.0
+
             -- 3. Assists Intervention
             local tcsActive, tcsMult = SPZAssists.UpdateTCS(vehicle, profile, throttle)
+            tcsMult = tcsMult or 1.0
             PhysicsState.tcs_active = tcsActive
             PhysicsState.abs_active = SPZAssists.UpdateABS(vehicle, profile, brake)
             PhysicsState.lc_active  = SPZAssists.UpdateLC(vehicle, profile, speed, throttle, brake)
