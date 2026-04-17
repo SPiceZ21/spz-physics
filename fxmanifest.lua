@@ -12,15 +12,16 @@ shared_scripts {
   '@spz-lib/shared/math.lua',
   'shared/events.lua',
   'shared/constants.lua',
-}
-
-client_scripts {
   'config.lua',
   'data/globalvehdata.lua',
   'data/enginedata.lua',
   'data/tiredata.lua',
   'data/engineswap.lua',
   'data/vehdata.lua',
+  'shared/pp.lua',                     -- moved from client/pp.lua to shared
+}
+
+client_scripts {
   'client/main.lua',
   'client/engine.lua',
   'client/gearbox.lua',
@@ -30,11 +31,14 @@ client_scripts {
   'client/flywheel.lua',
   'client/swaybar.lua',
   'client/assists.lua',
-  'client/pp.lua',
   'client/engineswap.lua',
   'client/statebag.lua',
   'client/exports.lua',
   'client/tick.lua',                   -- last — starts the main loop
+}
+
+server_scripts {
+  'server/main.lua',
 }
 
 dependencies {
