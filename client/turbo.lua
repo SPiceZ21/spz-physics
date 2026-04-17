@@ -1,10 +1,11 @@
 -- client/turbo.lua
+
 local currentBoost = 0.0
 
 local function UpdateBoost(vehicle, profile, currentRpm, throttle)
   if profile.turbo.type == "none" then
     currentBoost = 0.0
-    return
+    return 0.0
   end
 
   local t = profile.turbo
@@ -25,10 +26,13 @@ local function UpdateBoost(vehicle, profile, currentRpm, throttle)
   currentBoost = math.max(0.0, math.min(currentBoost, t.max_boost_bar))
 
   -- Apply boost as engine torque multiplier bonus
-  local boostMultiplier = 1.0 + (currentBoost / t.max_boost_bar) * 0.35
+  local boostMultiplier = 1.0 + (currentBoost / t.max_boost_bar) * (Config.TurboBoostMultiplier or 0.35)
   SetVehicleEngineTorqueMultiplier(vehicle, boostMultiplier)
+  
+  return currentBoost
 end
 
 SPZTurbo = {
-    UpdateBoost = UpdateBoost
+    UpdateBoost = UpdateBoost,
+    GetCurrentBoost = function() return currentBoost end
 }
