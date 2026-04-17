@@ -22,15 +22,15 @@ local function UpdateTCS(vehicle, profile, throttle)
       slipMagnitude = math.max(0, rearSpeed - vehSpeed, frontSpeed - vehSpeed)
   end
 
-  local threshold = Config.TCSSlipThreshold or 0.25
+  local multiplier = 1.0
   if slipMagnitude > threshold and throttle > 0.3 then
     -- Cut torque proportionally to slip magnitude
     local cut = math.min(0.95, (slipMagnitude / threshold) * 0.2)
-    SetVehicleEngineTorqueMultiplier(vehicle, 1.0 - cut)
+    multiplier = 1.0 - cut
     tcsActive = true
   end
 
-  return tcsActive
+  return tcsActive, multiplier
 end
 
 local function UpdateABS(vehicle, profile, brake)

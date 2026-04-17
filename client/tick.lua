@@ -23,21 +23,24 @@ CreateThread(function()
             PhysicsState.gear = GetVehicleCurrentGear(vehicle)
             
             -- 2. Turbo Simulation
-            PhysicsState.boost_bar = SPZTurbo.UpdateBoost(vehicle, profile, PhysicsState.rpm, throttle)
+            local boost, boostMult = SPZTurbo.UpdateBoost(vehicle, profile, PhysicsState.rpm, throttle)
+            PhysicsState.boost_bar = boost
             
             -- 3. Assists Intervention
-            -- Torquemultiplier is reset by UpdateBoost, but Assists may cut it further
-            PhysicsState.tcs_active = SPZAssists.UpdateTCS(vehicle, profile, throttle)
+            local tcsActive, tcsMult = SPZAssists.UpdateTCS(vehicle, profile, throttle)
+            PhysicsState.tcs_active = tcsActive
             PhysicsState.abs_active = SPZAssists.UpdateABS(vehicle, profile, brake)
             PhysicsState.lc_active  = SPZAssists.UpdateLC(vehicle, profile, speed, throttle, brake)
             
             -- 4. Tyre Model
             SPZTyre.ApplyTyrePhysics(vehicle, profile, speed)
             
-            -- 5. Final torque modulation (Power Curve)
-            local powerFactor = SPZEngine.GetPowerAtRPM(PhysicsState.rpm, profile.engine.power_curve)
-            local currentTorqueMult = GetVehicleEngineTorqueMultiplier(vehicle)
-            SetVehicleEngineTorqueMultiplier(vehicle, currentTorqueMult * powerFactor)
+            -- 5. Final torque modulation (Power Curve + Modifiers)
+            local powerCurveMult = SPZEngine.GetPowerAtRPM(PhysicsState.rpm, profile.engine.power_curve)
+            local shiftMult = SPZGearbox.GetShiftMultiplier()
+            
+            local finalTorqueMult = powerCurveMult * boostMult * tcsMult * shiftMult
+            SetVehicleEngineTorqueMultiplier(vehicle, finalTorqueMult)
             
             -- 6. HUD Sync (Statebag)
             SyncPhysicsStateToBag(PhysicsState)

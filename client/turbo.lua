@@ -27,9 +27,8 @@ local function UpdateBoost(vehicle, profile, currentRpm, throttle)
 
   -- Apply boost as engine torque multiplier bonus
   local boostMultiplier = 1.0 + (currentBoost / t.max_boost_bar) * (Config.TurboBoostMultiplier or 0.35)
-  SetVehicleEngineTorqueMultiplier(vehicle, boostMultiplier)
   
-  return currentBoost
+  return currentBoost, boostMultiplier
 end
 
 SPZTurbo = {

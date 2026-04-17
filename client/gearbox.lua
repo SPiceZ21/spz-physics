@@ -1,31 +1,32 @@
 -- client/gearbox.lua
 
-local shiftLocked = false
+local shiftEndTime = 0
+
+local function GetShiftMultiplier()
+    if GetGameTimer() < shiftEndTime then
+        return 0.0
+    end
+    return 1.0
+end
 
 local function TryShiftUp(vehicle, profile)
   local gear = GetVehicleCurrentGear(vehicle)
   if gear >= profile.gearbox.gears then return end
-  if shiftLocked then return end
+  if GetGameTimer() < shiftEndTime then return end
 
-  shiftLocked = true
   -- Apply shift delay — brief torque cut during shift
-  SetVehicleEngineTorqueMultiplier(vehicle, 0.0)
-  Wait(profile.gearbox.shift_delay)
+  shiftEndTime = GetGameTimer() + (profile.gearbox.shift_delay or 150)
   SetVehicleCurrentGear(vehicle, gear + 1)
-  shiftLocked = false
 end
 
 local function TryShiftDown(vehicle, profile)
   local gear = GetVehicleCurrentGear(vehicle)
   if gear <= 1 then return end
-  if shiftLocked then return end
+  if GetGameTimer() < shiftEndTime then return end
 
   -- Blip throttle on downshift (heel-toe)
-  shiftLocked = true
-  SetVehicleEngineTorqueMultiplier(vehicle, 0.3)
-  Wait(profile.gearbox.shift_delay)
+  shiftEndTime = GetGameTimer() + (profile.gearbox.shift_delay or 100)
   SetVehicleCurrentGear(vehicle, gear - 1)
-  shiftLocked = false
 end
 
 local function AutoShift(vehicle, profile, currentRpm)
@@ -61,6 +62,7 @@ SPZGearbox = {
     TryShiftUp = TryShiftUp,
     TryShiftDown = TryShiftDown,
     AutoShift = AutoShift,
+    GetShiftMultiplier = GetShiftMultiplier,
     CalculateRPMFromWheelSpeed = CalculateRPMFromWheelSpeed,
     EstimateTopSpeed = EstimateTopSpeed
 }
