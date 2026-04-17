@@ -97,7 +97,6 @@ end)
 
 -- SETTERS --
 
--- Note: In a client-side context, 'source' is discarded/irrelevant. If triggered from network, server passes down specific values.
 exports("SetAssists", function(sourceOverride, assistsConfig)
     local cfg = assistsConfig or sourceOverride -- if passed directly on client
     if PhysicsState and type(cfg) == "table" then
@@ -106,6 +105,11 @@ exports("SetAssists", function(sourceOverride, assistsConfig)
         if cfg.esc ~= nil then PhysicsState.esc_enabled = cfg.esc end
         if cfg.lc ~= nil then PhysicsState.lc_enabled = cfg.lc end
     end
+end)
+
+RegisterNetEvent("SPZ:physics:forceAssists")
+AddEventHandler("SPZ:physics:forceAssists", function(assistsConfig)
+    exports["spz-physics"]:SetAssists(assistsConfig)
 end)
 
 exports("SetEngineSwap", function(sourceOverride, engineId)
