@@ -28,4 +28,5 @@ GlobalVehData = {
   flywheel     = { weight_kg = 10, inertia = 0.40 },
   swaybar      = { front_strength = 50, rear_strength = 50, front_bias = 0.50 },
   assists      = { tcs = true, abs = true, esc = true, lc = false },
+  weight       = 1500,
 }
