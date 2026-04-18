@@ -79,7 +79,7 @@ local function UpdateESC(vehicle, profile, speed)
 
     local vel     = GetEntityVelocity(vehicle)
     local fwd     = GetEntityForwardVector(vehicle)
-    local right   = GetEntityRightVector(vehicle)
+    local right   = GetEntityMatrix(vehicle)   -- first return = right vector
 
     -- Compute slip angle: angle between velocity vector and forward axis
     local velLen  = math.sqrt(vel.x^2 + vel.y^2) + 0.001
@@ -142,3 +142,37 @@ SPZAssists = {
     UpdateESC = UpdateESC,
     UpdateLC  = UpdateLC,
 }
+
+-- ---------------------------------------------------------------------------
+-- Toggle commands — /spz_tcs  /spz_abs  /spz_esc
+-- Flip the PhysicsState enable flag and notify the player via chat.
+-- ---------------------------------------------------------------------------
+local function _notifyAssist(name, enabled)
+    local colour = enabled and "~g~" or "~r~"
+    local state  = enabled and "ON" or "OFF"
+    TriggerEvent("chat:addMessage", {
+        args = { "~y~[SPZ Physics]~w~ " .. name .. " " .. colour .. state }
+    })
+end
+
+RegisterCommand("spz_tcs", function()
+    if not PhysicsState then return end
+    PhysicsState.tcs_enabled = not PhysicsState.tcs_enabled
+    _notifyAssist("TCS", PhysicsState.tcs_enabled)
+end, false)
+
+RegisterCommand("spz_abs", function()
+    if not PhysicsState then return end
+    PhysicsState.abs_enabled = not PhysicsState.abs_enabled
+    _notifyAssist("ABS", PhysicsState.abs_enabled)
+end, false)
+
+RegisterCommand("spz_esc", function()
+    if not PhysicsState then return end
+    PhysicsState.esc_enabled = not PhysicsState.esc_enabled
+    _notifyAssist("ESC", PhysicsState.esc_enabled)
+end, false)
+
+RegisterKeyMapping("spz_tcs", "SPiceZ: Toggle Traction Control", "keyboard", "NUMPAD7")
+RegisterKeyMapping("spz_abs", "SPiceZ: Toggle ABS", "keyboard", "NUMPAD8")
+RegisterKeyMapping("spz_esc", "SPiceZ: Toggle ESC", "keyboard", "NUMPAD9")

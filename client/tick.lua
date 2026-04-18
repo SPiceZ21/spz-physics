@@ -27,9 +27,10 @@ CreateThread(function()
             local speed     = GetEntitySpeed(vehicle)            -- m/s
 
             -- Kinematics for geometry systems
+            -- GetEntityMatrix returns: rightVec, forwardVec, upVec, position (all vector3)
             local vel       = GetEntityVelocity(vehicle)
             local fwd       = GetEntityForwardVector(vehicle)
-            local right     = GetEntityRightVector(vehicle)
+            local right     = GetEntityMatrix(vehicle)   -- first return = right vector
             local longAccel = fwd.x * vel.x + fwd.y * vel.y + fwd.z * vel.z
             local latAccel  = math.abs(right.x * vel.x + right.y * vel.y + right.z * vel.z)
 
