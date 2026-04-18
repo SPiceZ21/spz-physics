@@ -3,7 +3,7 @@ game 'gta5'
 
 name 'spz-physics'
 description 'SPiceZ-Core — Full vehicle physics engine'
-version '1.0.0'
+version '2.0.0'
 author 'SPiceZ-Core'
 
 shared_scripts {
@@ -18,23 +18,50 @@ shared_scripts {
   'data/tiredata.lua',
   'data/engineswap.lua',
   'data/vehdata.lua',
-  'shared/pp.lua',                     -- moved from client/pp.lua to shared
+  'shared/pp.lua',
 }
 
 client_scripts {
+  -- Core state initialisation (must be first)
   'client/main.lua',
+  'client/statebag.lua',
+
+  -- Environment systems (no vehicle dependency — load early)
+  'client/surface.lua',
+  'client/road.lua',
+
+  -- Per-vehicle physics modules
+  'client/thermals.lua',
+  'client/grip.lua',
+  'client/damage.lua',
+  'client/performance.lua',
+  'client/aero.lua',
+
+  -- Drivetrain simulation
   'client/engine.lua',
   'client/gearbox.lua',
   'client/turbo.lua',
+  'client/flywheel.lua',
+
+  -- Handling geometry
   'client/tyre.lua',
   'client/differential.lua',
-  'client/flywheel.lua',
   'client/swaybar.lua',
+
+  -- Driver aids
   'client/assists.lua',
+
+  -- Event handlers
   'client/engineswap.lua',
-  'client/statebag.lua',
+
+  -- HUD / telemetry
+  'client/telemetry.lua',
+
+  -- Public API surface
   'client/exports.lua',
-  'client/tick.lua',                   -- last — starts the main loop
+
+  -- Main loop (must be last — depends on everything above)
+  'client/tick.lua',
 }
 
 server_scripts {

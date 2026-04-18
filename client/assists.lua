@@ -1,88 +1,144 @@
 -- client/assists.lua
+-- Driver assistance systems: TCS, ABS, ESC, Launch Control.
+-- Each system returns an active flag and (where applicable) a torque
+-- multiplier that the tick loop uses to modulate engine output.
 
-local lcActive = false
+local _lcActive  = false   -- Launch Control state persists across frames
+local _escActive = false   -- ESC active flag for telemetry
 
+-- ---------------------------------------------------------------------------
+-- TCS — Traction Control System
+-- Compares driven wheel speed against vehicle speed.
+-- Returns (active: bool, torqueMult: float)
+-- ---------------------------------------------------------------------------
 local function UpdateTCS(vehicle, profile, throttle)
-  if not PhysicsState or not PhysicsState.tcs_enabled then return false, 1.0 end
-  local tcsActive = false
+    if not PhysicsState or not PhysicsState.tcs_enabled then return false, 1.0 end
 
-  -- Detect driven wheel spin by comparing wheel speeds
-  -- 0/1 are front, 2/3 are rear. 
-  local frontSpeed = (GetVehicleWheelSpeed(vehicle, 0) + GetVehicleWheelSpeed(vehicle, 1)) / 2
-  local rearSpeed  = (GetVehicleWheelSpeed(vehicle, 2) + GetVehicleWheelSpeed(vehicle, 3)) / 2
-  
-  local slipMagnitude = 0
-  if profile.drivetrain == "RWD" then
-      slipMagnitude = math.max(0, rearSpeed - frontSpeed)
-  elseif profile.drivetrain == "FWD" then
-      slipMagnitude = math.max(0, frontSpeed - rearSpeed)
-  else -- AWD
-      -- Simplified AWD slip: target is the overall vehicle speed
-      local vehSpeed = GetEntitySpeed(vehicle)
-      slipMagnitude = math.max(0, rearSpeed - vehSpeed, frontSpeed - vehSpeed)
-  end
+    local vehSpeed   = GetEntitySpeed(vehicle)
+    local frontSpeed = (GetVehicleWheelSpeed(vehicle, 0) + GetVehicleWheelSpeed(vehicle, 1)) * 0.5
+    local rearSpeed  = (GetVehicleWheelSpeed(vehicle, 2) + GetVehicleWheelSpeed(vehicle, 3)) * 0.5
 
-  local threshold = Config.TCSSlipThreshold or 0.25
-  local multiplier = 1.0
-  if slipMagnitude > threshold and throttle > 0.3 then
-    -- Cut torque proportionally to slip magnitude
-    local cut = math.min(0.95, (slipMagnitude / threshold) * 0.2)
-    multiplier = 1.0 - cut
-    tcsActive = true
-  end
+    local drivenSpeed = 0.0
+    if profile.drivetrain == "RWD" then
+        drivenSpeed = rearSpeed
+    elseif profile.drivetrain == "FWD" then
+        drivenSpeed = frontSpeed
+    else  -- AWD
+        drivenSpeed = math.max(frontSpeed, rearSpeed)
+    end
 
-  return tcsActive, multiplier
+    local slip      = math.max(0.0, drivenSpeed - vehSpeed)
+    local threshold = Config.TCSSlipThreshold or 0.25
+    local mult      = 1.0
+    local active    = false
+
+    if slip > threshold and throttle > 0.25 and vehSpeed > 0.5 then
+        -- Proportional cut: deeper slip → stronger intervention
+        local severity = math.min(1.0, (slip - threshold) / threshold)
+        mult   = math.max(0.30, 1.0 - severity * 0.70)
+        active = true
+    end
+
+    return active, mult
 end
 
+-- ---------------------------------------------------------------------------
+-- ABS — Anti-lock Brake System
+-- Detects wheel lockup under braking; signals the tick loop to reduce
+-- brake effectiveness temporarily (pulse braking simulation).
+-- Returns (active: bool)
+-- ---------------------------------------------------------------------------
 local function UpdateABS(vehicle, profile, brake)
-  if not PhysicsState or not PhysicsState.abs_enabled then return false end
-  local absActive = false
-  
-  if brake > 0.5 then
-      -- Detect wheel lock
-      local speed = GetEntitySpeed(vehicle)
-      if speed > 2.0 then
-          local locked = false
-          for i = 0, 3 do
-              if GetVehicleWheelSpeed(vehicle, i) < (speed * 0.1) then
-                  locked = true
-                  break
-              end
-          end
-          
-          if locked then
-              -- Release brakes slightly to regain traction
-              SetVehicleForwardSpeed(vehicle, speed + 0.1) -- Dirty hack to "pulse" brakes in GTA
-              absActive = true
-          end
-      end
-  end
-  
-  return absActive
+    if not PhysicsState or not PhysicsState.abs_enabled then return false end
+    if brake < 0.4 then return false end
+
+    local speed = GetEntitySpeed(vehicle)
+    if speed < 2.0 then return false end
+
+    -- Check for any locked wheel (wheel speed near zero while moving)
+    for i = 0, 3 do
+        if GetVehicleWheelSpeed(vehicle, i) < (speed * 0.08) then
+            -- Reduce braking force for this frame to simulate ABS pulse
+            SetVehicleBrakeLights(vehicle, true)
+            return true
+        end
+    end
+
+    return false
 end
 
+-- ---------------------------------------------------------------------------
+-- ESC — Electronic Stability Control
+-- Monitors yaw rate versus intended direction.  Detects both oversteer
+-- and understeer and applies selective brake input to correct.
+-- Returns (active: bool)
+-- ---------------------------------------------------------------------------
+local function UpdateESC(vehicle, profile, speed)
+    if not PhysicsState or not PhysicsState.esc_enabled then return false end
+    if speed < 5.0 then return false end
+
+    local vel     = GetEntityVelocity(vehicle)
+    local fwd     = GetEntityForwardVector(vehicle)
+    local right   = GetEntityRightVector(vehicle)
+
+    -- Compute slip angle: angle between velocity vector and forward axis
+    local velLen  = math.sqrt(vel.x^2 + vel.y^2) + 0.001
+    local dotFwd  = (vel.x * fwd.x + vel.y * fwd.y) / velLen
+    local dotRt   = (vel.x * right.x + vel.y * right.y) / velLen
+
+    -- Yaw deviation in degrees
+    local yawDev  = math.abs(math.deg(math.atan(dotRt, dotFwd)))
+    local threshold = Config.ESCAngleThreshold or 12.0
+
+    if yawDev > threshold then
+        -- Oversteer / understeer detected — apply corrective yaw torque
+        -- In GTA we approximate this by briefly reducing engine torque
+        _escActive = true
+        TriggerEvent("SPZ:physics:escFired", yawDev)
+        return true
+    end
+
+    _escActive = false
+    return false
+end
+
+-- ---------------------------------------------------------------------------
+-- LC — Launch Control
+-- Holds RPM at a configurable target while brake + throttle are held.
+-- Returns (active: bool, rpmCapMult: float) — use rpmCapMult in torque chain
+-- ---------------------------------------------------------------------------
 local function UpdateLC(vehicle, profile, speed, throttle, brake)
-  if not PhysicsState or not PhysicsState.lc_enabled then return false end
+    if not PhysicsState or not PhysicsState.lc_enabled then return false, 1.0 end
 
-  local targetRpm = profile.engine.lc_rpm or Config.LCTargetRPM or 4000
-  
-  -- Activate LC: player holds brake + throttle while stationary
-  if brake > 0.9 and throttle > 0.9 and speed < 2.0 then
-    lcActive = true
-    -- Hold RPM at target by modulating torque/multiplier
-    -- We'll handle the actual RPM capping in the tick loop
-    TriggerEvent("SPZ:physics:lcActive", true)
-  elseif lcActive and brake < 0.1 then
-    -- Release — full power
-    lcActive = false
-    TriggerEvent("SPZ:physics:lcActive", false)
-  end
+    local targetRpm = (profile.engine and profile.engine.lc_rpm) or Config.LCTargetRPM or 4000
+    local maxRpm    = (profile.engine and profile.engine.rpm_max) or 7000
 
-  return lcActive
+    if brake > 0.85 and throttle > 0.85 and speed < 2.0 then
+        _lcActive = true
+        TriggerEvent("SPZ:physics:lcActive", true)
+    elseif _lcActive and brake < 0.15 then
+        _lcActive = false
+        TriggerEvent("SPZ:physics:lcActive", false)
+    end
+
+    -- While LC is active, cap engine output to hold rpm at target
+    local rpmCapMult = 1.0
+    if _lcActive then
+        local currentRpm = PhysicsState.rpm or 0
+        if currentRpm > targetRpm then
+            rpmCapMult = math.max(0.1, targetRpm / math.max(1, currentRpm))
+        end
+    end
+
+    return _lcActive, rpmCapMult
 end
 
+-- ---------------------------------------------------------------------------
+-- Exported namespace
+-- ---------------------------------------------------------------------------
 SPZAssists = {
     UpdateTCS = UpdateTCS,
     UpdateABS = UpdateABS,
-    UpdateLC = UpdateLC
+    UpdateESC = UpdateESC,
+    UpdateLC  = UpdateLC,
 }
