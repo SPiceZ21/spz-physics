@@ -24,6 +24,7 @@ shared_scripts {
 client_scripts {
   -- Core state initialisation (must be first)
   'client/main.lua',
+  'client/helpers.lua',   -- Polyfills (GetEntityRightVector, etc.)
   'client/statebag.lua',
 
   -- Environment systems (no vehicle dependency — load early)
