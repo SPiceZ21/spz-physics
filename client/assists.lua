@@ -44,10 +44,14 @@ end
 
 -- ---------------------------------------------------------------------------
 -- ABS — Anti-lock Brake System
--- Detects wheel lockup under braking; signals the tick loop to reduce
--- brake effectiveness temporarily (pulse braking simulation).
+-- Detects wheel lockup under braking and pulses brake pressure on locked
+-- wheels to prevent sustained lockup.
 -- Returns (active: bool)
 -- ---------------------------------------------------------------------------
+local _absPulse = false
+local _absPulseTimer = 0
+local ABS_PULSE_MS = 80  -- toggle brake pressure every 80ms
+
 local function UpdateABS(vehicle, profile, brake)
     if not PhysicsState or not PhysicsState.abs_enabled then return false end
     if brake < 0.4 then return false end
@@ -55,13 +59,26 @@ local function UpdateABS(vehicle, profile, brake)
     local speed = GetEntitySpeed(vehicle)
     if speed < 2.0 then return false end
 
-    -- Check for any locked wheel (wheel speed near zero while moving)
+    local anyLocked = false
+    local now = GetGameTimer()
+
     for i = 0, 3 do
         if GetVehicleWheelSpeed(vehicle, i) < (speed * 0.08) then
-            -- Reduce braking force for this frame to simulate ABS pulse
-            SetVehicleBrakeLights(vehicle, true)
-            return true
+            anyLocked = true
+            -- Pulse brake pressure: release locked wheel so it can spin up again
+            if now - _absPulseTimer >= ABS_PULSE_MS then
+                _absPulse = not _absPulse
+                _absPulseTimer = now
+            end
+            -- Alternate between full brake and reduced pressure to simulate ABS pulse
+            local pressure = _absPulse and brake or (brake * 0.25)
+            SetVehicleWheelBrakePressure(vehicle, i, pressure)
         end
+    end
+
+    if anyLocked then
+        SetVehicleBrakeLights(vehicle, true)
+        return true
     end
 
     return false

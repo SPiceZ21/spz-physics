@@ -135,7 +135,7 @@ function SPZTelemetry.Tick(vehicle, state)
     _lastUpdate = now
 
     local payload = _buildPayload(vehicle, state)
-    SendNUIMessage({ type = "SPZ_TELEMETRY", payload = payload })
+    TriggerEvent("SPZ:telemetry:update", payload)
 end
 
 -- ---------------------------------------------------------------------------
@@ -150,13 +150,13 @@ CreateThread(function()
         -- Toggle visibility
         if IsControlJustPressed(0, cfg.toggleKey) then
             _visible = not _visible
-            SendNUIMessage({ type = "SPZ_TELEMETRY_TOGGLE", visible = _visible })
+            TriggerEvent("SPZ:telemetry:toggle", _visible)
         end
 
         -- Cycle display mode
         if _visible and IsControlJustPressed(0, cfg.cycleKey) then
             _modeIndex = (_modeIndex % #MODES) + 1
-            SendNUIMessage({ type = "SPZ_TELEMETRY_MODE", mode = MODES[_modeIndex] })
+            TriggerEvent("SPZ:telemetry:mode", MODES[_modeIndex])
         end
 
         ::continue::

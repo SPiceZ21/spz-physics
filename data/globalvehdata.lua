@@ -65,9 +65,9 @@ GlobalVehData = {
     },
 
     assists = {
-        tcs = false,
+        tcs = true,
         abs = true,
-        esc = false,
+        esc = true,
         lc  = false,
     },
 }
