@@ -26,11 +26,9 @@ CreateThread(function()
             local brake     = GetControlValue(0, 72) / 127.0   -- 0–1
             local speed     = GetEntitySpeed(vehicle)            -- m/s
 
-            -- Kinematics for geometry systems
-            -- GetEntityMatrix returns: rightVec, forwardVec, upVec, position (all vector3)
+            -- Kinematics — cache matrix once and reuse across all subsystems
             local vel       = GetEntityVelocity(vehicle)
-            local fwd       = GetEntityForwardVector(vehicle)
-            local right     = GetEntityMatrix(vehicle)   -- first return = right vector
+            local right, fwd = GetEntityMatrix(vehicle)  -- rightVec, forwardVec (first two returns)
             local longAccel = fwd.x * vel.x + fwd.y * vel.y + fwd.z * vel.z
             local latAccel  = math.abs(right.x * vel.x + right.y * vel.y + right.z * vel.z)
 
@@ -100,8 +98,13 @@ CreateThread(function()
             local escMult = escActive and 0.45 or 1.0
 
             -- ─── 10. Final Torque Multiplier ─────────────────────────────────
-            -- Combine: power curve × boost × shift cut × TCS × ESC × LC cap
-            local finalTorque = powerMult * boostMult * shiftMult * tcsMult * escMult * lcMult
+            -- Nil-safe: a crashed subsystem returns nil → default to 1.0 (no cut)
+            local finalTorque = (powerMult  or 1.0)
+                              * (boostMult  or 1.0)
+                              * (shiftMult  or 1.0)
+                              * (tcsMult    or 1.0)
+                              * escMult
+                              * (lcMult     or 1.0)
             SetVehicleEngineTorqueMultiplier(vehicle, math.max(0.0, finalTorque))
 
             -- ─── 11. Tyre Lateral Grip (Compound Slip-Angle Model) ───────────

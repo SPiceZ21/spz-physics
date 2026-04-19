@@ -95,8 +95,7 @@ local function UpdateESC(vehicle, profile, speed)
     if speed < 5.0 then return false end
 
     local vel     = GetEntityVelocity(vehicle)
-    local fwd     = GetEntityForwardVector(vehicle)
-    local right   = GetEntityMatrix(vehicle)   -- first return = right vector
+    local right, fwd = GetEntityMatrix(vehicle)  -- rightVec, forwardVec
 
     -- Compute slip angle: angle between velocity vector and forward axis
     local velLen  = math.sqrt(vel.x^2 + vel.y^2) + 0.001
