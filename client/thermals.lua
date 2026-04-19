@@ -102,7 +102,9 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
         local wheelSpd = GetVehicleWheelSpeed(vehicle, i - 1) -- GTA index 0-based
         local slipRatio = 0.0
         if vehSpeedMs > 0.5 then
-            slipRatio = math.abs(wheelSpd - vehSpeedMs) / (vehSpeedMs + 0.001)
+            -- Clamp denominator to ≥10 m/s so low-speed launches don't spike temps instantly
+            local denom = math.max(vehSpeedMs, 10.0)
+            slipRatio = math.min(1.0, math.abs(wheelSpd - vehSpeedMs) / denom)
         end
 
         -- Heat accumulation
@@ -152,14 +154,26 @@ end
 -- Returns a scalar in [0, 1] based on the coldest/hottest wheel.
 -- ---------------------------------------------------------------------------
 function SPZThermals.GetGripMod()
-    local worst = 1.0
+    local worst      = 1.0
+    local blownCount = 0
+
     for i = 1, WHEEL_COUNT do
-        if _blown[i] then return 0.25 end   -- at least one blown — significant loss
-        local mod = _tempGripMod(_temp[i])
-        -- Also penalise for wear: 0% worn → no penalty, 100% worn → -20% grip
-        local wearMod = 1.0 - (_wear[i] * 0.20)
-        worst = math.min(worst, mod * wearMod)
+        if _blown[i] then
+            blownCount = blownCount + 1
+        else
+            local mod     = _tempGripMod(_temp[i])
+            local wearMod = 1.0 - (_wear[i] * 0.20)
+            worst = math.min(worst, mod * wearMod)
+        end
     end
+
+    if blownCount > 0 then
+        -- Proportional penalty: each blown tire costs 35% grip (capped at 100%)
+        -- 1 blown → ×0.65, 2 → ×0.50, 3 → ×0.35, 4 → ×0.0
+        local blownFactor = math.max(0.0, 1.0 - blownCount * 0.35)
+        worst = worst * blownFactor
+    end
+
     return worst
 end
 
