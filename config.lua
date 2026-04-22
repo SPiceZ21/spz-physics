@@ -150,16 +150,16 @@ Config.Thermals = {
 -- ─────────────────────────────────────────────────────────────────────────
 Config.Damage = {
     enabled             = true,
-    impactSpeedThresh   = 7.5,      -- m/s velocity drop required to count as a hit
+    impactSpeedThresh   = 10.0,     -- m/s velocity drop required to count as a hit
     pollRateMs          = 50,       -- how often velocity is checked
-    hitCooldownMs       = 280,      -- min time (ms) between registering hits
-    engineDmgPerHit     = 5,        -- GTA engine HP lost per impact
-    bodyDmgPerHit       = 12,       -- GTA body HP lost per impact
-    waterSinkRate       = 15,       -- engine HP/s drained when submerged
-    overRevRate         = 2,        -- engine HP/s at sustained redline
-    airCoolSpeedMs      = 26.0,     -- m/s — above this, airflow counters over-rev
-    gripLossCap         = 0.32,     -- max traction reduction from total damage
-    gripLossFloor       = 0.15,     -- minimum grip multiplier (never goes below)
+    hitCooldownMs       = 400,      -- min time (ms) between registering hits
+    engineDmgPerHit     = 2,        -- GTA engine HP lost per impact
+    bodyDmgPerHit       = 4,        -- GTA body HP lost per impact
+    waterSinkRate       = 8,        -- engine HP/s drained when submerged
+    overRevRate         = 0.5,      -- engine HP/s at sustained redline
+    airCoolSpeedMs      = 22.0,     -- m/s — above this, airflow counters over-rev
+    gripLossCap         = 0.20,     -- max traction reduction from total damage
+    gripLossFloor       = 0.35,     -- minimum grip multiplier (never goes below)
     -- Per–GTA-vehicle-class damage sensitivity multipliers
     classScale          = {
         [8]  = 0.60, -- Motorcycles — lighter, damaged more easily

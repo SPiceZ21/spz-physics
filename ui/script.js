@@ -85,7 +85,7 @@ window.addEventListener('message', function(event) {
         // Page 2: Engine
         if (currentPage === 2) {
             document.getElementById('gear-val').innerText = d.gear === 0 ? "R" : d.gear;
-            document.getElementById('rpm-val').innerText = Math.round(d.rpm * d.rpmMax);
+            document.getElementById('rpm-val').innerText = Math.round(d.rpm);
             document.getElementById('speed-val').innerHTML = `${d.speedMph} <small>MPH</small>`;
             
             document.getElementById('throttle-bar').style.width = `${d.throttle}%`;
@@ -98,19 +98,27 @@ window.addEventListener('message', function(event) {
 
         // Page 3: G-Force
         if (currentPage === 3) {
-            const maxG = 2.0;
-            const latPct = 50 + (d.latG / maxG) * 50;
-            const lonPct = 50 - (d.longG / maxG) * 50; // Invert LonG for visual logic (forward = up)
+            const maxG = 2.5; // Scale for the visual UI
             
-            document.getElementById('g-dot').style.left = `${latPct}%`;
-            document.getElementById('g-dot').style.top = `${lonPct}%`;
+            // Calculate percentages and CLAMP them to [0, 100]
+            let latPct = 50 + (d.latG / maxG) * 50;
+            let lonPct = 50 - (d.longG / maxG) * 50;
+            
+            latPct = Math.min(98, Math.max(2, latPct));
+            lonPct = Math.min(98, Math.max(2, lonPct));
+            
+            const dot = document.getElementById('g-dot');
+            if (dot) {
+                dot.style.left = `${latPct}%`;
+                dot.style.top = `${lonPct}%`;
+            }
             
             ghostTrail.push({ x: latPct, y: lonPct });
             if (ghostTrail.length > GHOST_MAX) ghostTrail.shift();
             renderGhostTrail();
             
-            document.getElementById('lat-g').innerText = d.latG.toFixed(2);
-            document.getElementById('lon-g').innerText = d.longG.toFixed(2);
+            document.getElementById('lat-g').textContent = d.latG.toFixed(2);
+            document.getElementById('lon-g').textContent = d.longG.toFixed(2);
         }
     }
 });

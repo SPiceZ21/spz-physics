@@ -12,71 +12,75 @@ local _lastUpdate = 0
 
 local MODES <const> = { "full", "temps", "minimal" }
 
+local _lastVel = vector3(0,0,0)
+local _lastG   = { x = 0.0, y = 0.0 }
+
 -- ---------------------------------------------------------------------------
 -- Internal: gather a complete snapshot from all live systems
 -- ---------------------------------------------------------------------------
 local function _buildPayload(vehicle, state)
     local speed     = GetEntitySpeed(vehicle)
-    local speedKph  = speed * 3.6
     local speedMph  = speed * 2.23694
 
-    -- G-force via velocity-delta approximation
+    -- Proper G-force via acceleration (delta-v / dt)
     local vel       = GetEntityVelocity(vehicle)
+    local dt        = (GetFrameTime() > 0) and GetFrameTime() or 0.01
+    
+    local accel     = (vel - _lastVel) / (dt * 9.81) -- Acceleration in Gs
+    _lastVel = vel
+
     local fwd       = GetEntityForwardVector(vehicle)
     local right     = GetEntityRightVector(vehicle)
-    local longG     = fwd.x * vel.x + fwd.y * vel.y + fwd.z * vel.z
-    local latG      = right.x * vel.x + right.y * vel.y + right.z * vel.z
+    
+    -- Project acceleration onto vehicle axes
+    local longG     = accel.x * fwd.x + accel.y * fwd.y + accel.z * fwd.z
+    local latG      = accel.x * right.x + accel.y * right.y + accel.z * right.z
 
-    -- Suspension compression per corner (0=uncompressed, 1=fully compressed)
+    -- Smoothing for G-meter
+    _lastG.x = _lastG.x + (latG - _lastG.x) * 0.15
+    _lastG.y = _lastG.y + (longG - _lastG.y) * 0.15
+
+    -- Suspension compression per corner
     local susp = {}
     for i = 0, 3 do
         susp[i + 1] = GetVehicleWheelSuspensionCompression(vehicle, i)
     end
 
-    -- Tire temps / wear from thermals module
+    -- Tire temps / wear
     local temps = SPZThermals.GetTemps()
     local wear  = SPZThermals.GetWear()
     local blown = SPZThermals.GetBlown()
 
-    -- Steering angle
+    -- Steering angle (Native returns degrees, usually -40 to 40)
     local steerAngle = GetVehicleSteeringAngle(vehicle)
 
-    -- Throttle / brake inputs
-    local throttle = GetControlValue(0, 71) / 127.0
-    local brake    = GetControlValue(0, 72) / 127.0
+    -- Inputs
+    local throttle = GetDisabledControlNormal(0, 71)
+    local brake    = GetDisabledControlNormal(0, 72)
 
     -- Road / surface info
     local wetness      = SPZRoad.GetWetness()
-    local weatherName  = SPZRoad.GetWeatherName()
     local surfGrip     = SPZSurface.GetOverallGrip()
 
-    -- Damage HP
+    -- Health
     local engineHP = GetVehicleEngineHealth(vehicle)
     local bodyHP   = GetVehicleBodyHealth(vehicle)
 
     return {
         -- Speed
-        speedKph    = math.floor(speedKph),
         speedMph    = math.floor(speedMph),
 
         -- Drivetrain
         gear        = state.gear or GetVehicleCurrentGear(vehicle),
         rpm         = state.rpm or 0,
-        rpmMin      = state.profile and state.profile.engine.rpm_min or 1000,
         rpmMax      = state.profile and state.profile.engine.rpm_max or 7000,
         boost       = state.boost_bar or 0.0,
 
-        -- Assists
-        tcsActive   = state.tcs_active or false,
-        absActive   = state.abs_active or false,
-        escActive   = state.esc_active or false,
-        lcActive    = state.lc_active  or false,
+        -- G-forces (Smoothed)
+        latG        = math.floor(_lastG.x * 100) / 100,
+        longG       = math.floor(_lastG.y * 100) / 100,
 
-        -- G-forces (m/s → normalise to Earth g)
-        latG        = math.floor((latG  / 9.81) * 100) / 100,
-        longG       = math.floor((longG / 9.81) * 100) / 100,
-
-        -- Suspension compression (FL, FR, RL, RR)
+        -- Suspension
         suspFL      = math.floor(susp[1] * 100),
         suspFR      = math.floor(susp[2] * 100),
         suspRL      = math.floor(susp[3] * 100),
@@ -89,35 +93,19 @@ local function _buildPayload(vehicle, state)
         throttle    = math.floor(throttle * 100),
         brake       = math.floor(brake    * 100),
 
-        -- Tire thermals (°C × 10 rounded to 1dp)
+        -- Tire thermals
         tempFL      = math.floor(temps[1] * 10) / 10,
         tempFR      = math.floor(temps[2] * 10) / 10,
         tempRL      = math.floor(temps[3] * 10) / 10,
         tempRR      = math.floor(temps[4] * 10) / 10,
-        wearFL      = math.floor(wear[1] * 100),
-        wearFR      = math.floor(wear[2] * 100),
-        wearRL      = math.floor(wear[3] * 100),
-        wearRR      = math.floor(wear[4] * 100),
-        blownFL     = blown[1],
-        blownFR     = blown[2],
-        blownRL     = blown[3],
-        blownRR     = blown[4],
 
-        -- Road / environment
+        -- Road
         wetness     = math.floor(wetness * 100),
-        weather     = weatherName,
         surfGrip    = math.floor(surfGrip * 100),
 
         -- Health
         engineHP    = math.floor(engineHP),
         bodyHP      = math.floor(bodyHP),
-
-        -- Meta
-        mode        = MODES[_modeIndex],
-        visible     = _visible,
-
-        -- Slipstream
-        inDraft     = SPZAero.IsInDraft(),
     }
 end
 
