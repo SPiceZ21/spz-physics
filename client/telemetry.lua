@@ -172,12 +172,12 @@ CreateThread(function()
         if not cfg.enabled then Wait(500) goto continue end
 
         -- Toggle visibility
-        if IsControlJustPressed(0, cfg.toggleKey) then
+        if IsDisabledControlJustPressed(0, cfg.toggleKey) or IsControlJustPressed(0, cfg.toggleKey) then
             ExecuteCommand("telemetry")
         end
 
         -- Cycle display mode (Pages)
-        if _visible and IsControlJustPressed(0, cfg.cycleKey) then
+        if _visible and (IsDisabledControlJustPressed(0, cfg.cycleKey) or IsControlJustPressed(0, cfg.cycleKey)) then
             _modeIndex = (_modeIndex % #MODES) + 1
             
             SendNUIMessage({

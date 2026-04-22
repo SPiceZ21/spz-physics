@@ -74,7 +74,13 @@ function SPZRoad.Tick(dt)
     local now = GetGameTimer()
     if (now - _lastUpdate) >= 2000 then
         _weatherName = _readWeatherName()
-        _isRaining   = _checkRaining(_weatherName)
+        -- Direct hash check for raining weather
+        local rainHash = GetHashKey("RAIN")
+        local thunderHash = GetHashKey("THUNDER")
+        local clearingHash = GetHashKey("CLEARING")
+        
+        local curWeather = GetPrevWeatherTypeHashName()
+        _isRaining = (curWeather == rainHash or curWeather == thunderHash or curWeather == clearingHash)
         _lastUpdate  = now
     end
 

@@ -91,7 +91,6 @@ function SPZDamage.Tick(vehicle, rpm, profile, speed, dt)
     if not cfg.enabled or not DoesEntityExist(vehicle) then return end
 
     local s   = _getState(vehicle)
-    local now = GetGameTimer()
 
     -- Skip trains, helis, planes, boats — they have no meaningful collision health
     local cls = GetVehicleClass(vehicle)
@@ -101,6 +100,7 @@ function SPZDamage.Tick(vehicle, rpm, profile, speed, dt)
     local curVel  = GetEntityVelocity(vehicle)
     local velDelta = #(curVel - s.lastVelocity) / (dt + 0.001)  -- m/s² impulse magnitude
 
+    local now = GetGameTimer()
     if velDelta >= cfg.impactSpeedThresh
     and (now - s.lastHitTime) >= cfg.hitCooldownMs then
 
@@ -133,7 +133,8 @@ function SPZDamage.Tick(vehicle, rpm, profile, speed, dt)
     s.lastVelocity = curVel
 
     -- ── Environmental: water submersion ──────────────────────────────────
-    if IsEntityInWater(vehicle) then
+    local subLevel = GetEntitySubmergedLevel(vehicle)
+    if subLevel > 0.4 then
         local drain = cfg.waterSinkRate * dt
         local hp    = GetVehicleEngineHealth(vehicle)
         SetVehicleEngineHealth(vehicle, math.max(0.0, hp - drain))
