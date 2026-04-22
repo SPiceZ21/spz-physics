@@ -123,7 +123,7 @@ function SPZDamage.Tick(vehicle, rpm, profile, speed, dt)
     s.lastVelocity = curVel
 
     -- ── Environmental: water submersion ──────────────────────────────────
-    if IsVehicleInWater(vehicle) then
+    if IsEntityInWater(vehicle) then
         local drain = cfg.waterSinkRate * dt
         local hp    = GetVehicleEngineHealth(vehicle)
         SetVehicleEngineHealth(vehicle, math.max(0.0, hp - drain))
