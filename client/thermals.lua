@@ -74,9 +74,27 @@ end
 
 local _lastLoadTime = 0
 
-function SPZThermals.Reset()
+-- ---------------------------------------------------------------------------
+-- Internal: Map our 1–4 index to GTA's 0,1,4,5 layout
+-- ---------------------------------------------------------------------------
+local function _getGtaWheelIndex(i)
+    if i == 1 then return 0 end -- FL
+    if i == 2 then return 1 end -- FR
+    if i == 3 then return 4 end -- RL
+    if i == 4 then return 5 end -- RR
+    return i - 1
+end
+
+function SPZThermals.Reset(vehicle)
     _init()
     _lastLoadTime = GetGameTimer()
+    
+    -- Explicitly fix tires on reset if vehicle is provided
+    if vehicle and DoesEntityExist(vehicle) then
+        for i = 1, WHEEL_COUNT do
+            SetVehicleTyreFixed(vehicle, _getGtaWheelIndex(i))
+        end
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -86,8 +104,8 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
     local cfg    = Config.Thermals
     if not cfg.enabled then return end
 
-    -- Safety: Prevent instant pops on spawn/loading (2 second window)
-    local gracePeriod = (GetGameTimer() - _lastLoadTime) < 2000
+    -- Safety: Prevent instant pops on spawn/loading (3 second window)
+    local gracePeriod = (GetGameTimer() - _lastLoadTime) < 3000
 
     local safeDt = math.min(dt, 0.2)
     local driven = _getDrivenSet(drivetrain)
@@ -101,9 +119,10 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
     for i = 1, WHEEL_COUNT do
         if _blown[i] then goto continue end
 
+        -- Use 0,1,2,3 for speed/suspension natives
         local wheelSpd = GetVehicleWheelSpeed(vehicle, i - 1)
         
-        -- Sanity check: If wheel speed is nonsensical (spawn glitch), ignore it
+        -- Sanity check
         if not wheelSpd or wheelSpd > 200.0 then wheelSpd = vehSpeedMs end
 
         local slipRatio = 0.0
@@ -124,10 +143,10 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
 
         _temp[i] = math.max(ambient, math.min(cfg.maxCapTemp, _temp[i] + totalHeat - cooling))
 
-        -- Blowout check (Disabled during grace period)
+        -- Blowout check (using corrected indices 0,1,4,5)
         if not gracePeriod and _temp[i] >= cfg.blowoutThreshold then
             _blown[i] = true
-            SetVehicleTyreBurst(vehicle, i - 1, true, 1000.0)
+            -- SetVehicleTyreBurst(vehicle, _getGtaWheelIndex(i), true, 1000.0)
             TriggerEvent("SPZ:physics:tyreBlow", i)
         end
 
@@ -140,7 +159,7 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
 
         if not gracePeriod and _wear[i] >= 1.0 and not _blown[i] then
             _blown[i] = true
-            SetVehicleTyreBurst(vehicle, i - 1, true, 1000.0)
+            -- SetVehicleTyreBurst(vehicle, _getGtaWheelIndex(i), true, 1000.0)
             TriggerEvent("SPZ:physics:tyreBlow", i)
         end
 

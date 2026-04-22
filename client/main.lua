@@ -34,7 +34,7 @@ local function LoadVehicleProfile(vehicle)
     PhysicsState.top_speed = ppData.top_speed
 
     -- Reset all subsystems for the new vehicle
-    SPZThermals.Reset()
+    SPZThermals.Reset(vehicle)
     SPZDamage.Reset(vehicle)
     SPZAero.Reset()
     
