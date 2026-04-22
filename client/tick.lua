@@ -18,6 +18,14 @@ CreateThread(function()
 
         if PhysicsState and PhysicsState.loaded then
             local vehicle  = PhysicsState.vehicle
+            
+            -- Defensive: check if vehicle still exists
+            if not DoesEntityExist(vehicle) then
+                PhysicsState.loaded = false -- Mark as not loaded if entity is gone
+                TriggerEvent("SPZ:physics:unloaded")
+                goto continue
+            end
+
             local profile  = PhysicsState.profile
             local drivetrain = profile.drivetrain or "FWD"
 
@@ -128,6 +136,7 @@ CreateThread(function()
             SPZRoad.Tick(dt2)
             Wait(500)
         end
+        ::continue::
     end
 end)
 

@@ -78,7 +78,7 @@ end
 -- ---------------------------------------------------------------------------
 function SPZDamage.Tick(vehicle, rpm, profile, speed, dt)
     local cfg = Config.Damage
-    if not cfg.enabled then return end
+    if not cfg.enabled or not DoesEntityExist(vehicle) then return end
 
     local s   = _getState(vehicle)
     local now = GetGameTimer()
