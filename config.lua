@@ -10,7 +10,7 @@ Config.ESCAngleThreshold= 12.0         -- degrees of yaw deviation before ESC fi
 Config.LCTargetRPM      = 4000         -- default launch control hold RPM
 
 -- ── Turbo ─────────────────────────────────────────────────────────────────
-Config.TurboBoostMultiplier = 0.35     -- how much boost affects torque multiplier
+Config.TurboBoostMultiplier = 0.55     -- how much boost affects torque multiplier
 
 -- ── Gearbox ───────────────────────────────────────────────────────────────
 Config.DefaultShiftDelay    = 80       -- ms, used if profile has none
@@ -57,16 +57,16 @@ Config.SurfaceGrip = {
     [0x7B6C5B4A] = { dry = 0.54, wet = 0.34 },
     [0x1B893968] = { dry = 0.48, wet = 0.29 },
     -- Dirt / earth tracks
-    [0xA9DB53C2] = { dry = 0.46, wet = 0.27 },
-    [0x55D50A03] = { dry = 0.43, wet = 0.25 },
+    [0xA9DB53C2] = { dry = 0.72, wet = 0.55 },
+    [0x55D50A03] = { dry = 0.68, wet = 0.50 },
     -- Grass / turf
     [0x7AF8B2AC] = { dry = 0.40, wet = 0.26 },
     [0xF9EBD14B] = { dry = 0.36, wet = 0.23 },
     -- Sand / beach
     [0xF7B4AB7F] = { dry = 0.36, wet = 0.21 },
     -- Mud / marsh
-    [0x35B5E2BB] = { dry = 0.28, wet = 0.15 },
-    [0x5D2D11B1] = { dry = 0.25, wet = 0.13 },
+    [0x35B5E2BB] = { dry = 0.58, wet = 0.35 },
+    [0x5D2D11B1] = { dry = 0.55, wet = 0.33 },
     -- Ice
     [0xB2D4AB6B] = { dry = 0.11, wet = 0.07 },
     [0x73817F5C] = { dry = 0.14, wet = 0.09 },

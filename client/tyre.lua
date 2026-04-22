@@ -36,10 +36,14 @@ local function ApplyTyrePhysics(vehicle, profile, currentSpeed)
 
     local grip = GetGripAtSlip(slipAngle, tyreCompound)
     
+    -- Global grip scale to match GTA units (reference 2.4)
+    local gScale = 2.4
+    local finalGrip = grip * gScale
+
     -- Apply grip to handling floats
     -- Native GTA handling values: fTractionCurveMax, fTractionCurveMin
-    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMax", grip)
-    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMin", grip * 0.8)
+    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMax", finalGrip)
+    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMin", finalGrip * 0.8)
     
     return grip
 end
