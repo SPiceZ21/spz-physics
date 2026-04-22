@@ -62,10 +62,20 @@ end
 -- Internal: broadcast damage to server for multiplayer sync
 -- ---------------------------------------------------------------------------
 local function _syncDamage(vehicle)
-    local netId     = NetworkGetNetworkIdFromEntity(vehicle)
-    local engineHP  = GetVehicleEngineHealth(vehicle)
-    local bodyHP    = GetVehicleBodyHealth(vehicle)
-    TriggerServerEvent("SPZ:physics:damageSync", netId, engineHP, bodyHP)
+    if not DoesEntityExist(vehicle) then return end
+    
+    local timeout = 0
+    while not NetworkGetEntityIsNetworked(vehicle) and timeout < 100 do
+        Wait(0)
+        timeout = timeout + 1
+    end
+
+    if NetworkGetEntityIsNetworked(vehicle) then
+        local netId = NetworkGetNetworkIdFromEntity(vehicle)
+        local engineHP  = GetVehicleEngineHealth(vehicle)
+        local bodyHP    = GetVehicleBodyHealth(vehicle)
+        TriggerServerEvent("SPZ:physics:damageSync", netId, engineHP, bodyHP)
+    end
 end
 
 -- ---------------------------------------------------------------------------
