@@ -36,8 +36,8 @@ local function ApplyTyrePhysics(vehicle, profile, currentSpeed)
 
     local grip = GetGripAtSlip(slipAngle, tyreCompound)
     
-    -- Global grip scale to match GTA units (reference 2.4)
-    local gScale = 2.4
+    -- Global grip scale to match GTA units (Arcade boost)
+    local gScale = 3.2
     local finalGrip = grip * gScale
 
     -- Apply grip to handling floats

@@ -113,6 +113,7 @@ CreateThread(function()
                               * (tcsMult    or 1.0)
                               * escMult
                               * (lcMult     or 1.0)
+                              * (Config.GlobalTorqueMultiplier or 1.0)
             SetVehicleEngineTorqueMultiplier(vehicle, math.max(0.0, finalTorque))
 
             -- ─── 11. Tyre Lateral Grip (Compound Slip-Angle Model) ───────────

@@ -63,8 +63,8 @@ VehData["sultan"] = {
 
   -- ── Flywheel ──────────────────────────────────────────────────────
   flywheel = {
-    weight_kg    = 8.5,               -- heavier = slower rev response
-    inertia      = 0.35,              -- 0.0 (instant) – 1.0 (heavy diesel)
+    weight_kg    = 5.0,               -- lighter = faster rev response
+    inertia      = 0.12,              -- snappy arcade response
   },
 
   -- ── Sway Bar ──────────────────────────────────────────────────────

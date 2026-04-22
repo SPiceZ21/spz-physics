@@ -3,6 +3,7 @@ Config = {}
 
 -- ── Physics tick ──────────────────────────────────────────────────────────
 Config.TickRate         = 0            -- 0 = every frame, set higher to reduce load
+Config.GlobalTorqueMultiplier = 1.65   -- overall boost to all vehicles
 
 -- ── Assists ───────────────────────────────────────────────────────────────
 Config.TCSSlipThreshold = 0.25         -- wheel speed delta to trigger TCS
@@ -57,8 +58,8 @@ Config.SurfaceGrip = {
     [0x7B6C5B4A] = { dry = 0.54, wet = 0.34 },
     [0x1B893968] = { dry = 0.48, wet = 0.29 },
     -- Dirt / earth tracks
-    [0xA9DB53C2] = { dry = 0.72, wet = 0.55 },
-    [0x55D50A03] = { dry = 0.68, wet = 0.50 },
+    [0xA9DB53C2] = { dry = 0.88, wet = 0.65 },
+    [0x55D50A03] = { dry = 0.85, wet = 0.60 },
     -- Grass / turf
     [0x7AF8B2AC] = { dry = 0.40, wet = 0.26 },
     [0xF9EBD14B] = { dry = 0.36, wet = 0.23 },
@@ -152,10 +153,10 @@ Config.Damage = {
     impactSpeedThresh   = 7.5,      -- m/s velocity drop required to count as a hit
     pollRateMs          = 50,       -- how often velocity is checked
     hitCooldownMs       = 280,      -- min time (ms) between registering hits
-    engineDmgPerHit     = 18,       -- GTA engine HP lost per impact
-    bodyDmgPerHit       = 22,       -- GTA body HP lost per impact
-    waterSinkRate       = 28,       -- engine HP/s drained when submerged
-    overRevRate         = 9,        -- engine HP/s at sustained redline
+    engineDmgPerHit     = 5,        -- GTA engine HP lost per impact
+    bodyDmgPerHit       = 12,       -- GTA body HP lost per impact
+    waterSinkRate       = 15,       -- engine HP/s drained when submerged
+    overRevRate         = 2,        -- engine HP/s at sustained redline
     airCoolSpeedMs      = 26.0,     -- m/s — above this, airflow counters over-rev
     gripLossCap         = 0.32,     -- max traction reduction from total damage
     gripLossFloor       = 0.15,     -- minimum grip multiplier (never goes below)
