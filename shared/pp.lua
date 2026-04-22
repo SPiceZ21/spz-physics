@@ -2,7 +2,7 @@
 local function CalculatePP(profile, isTuned, turboOverride)
   local engine   = profile.engine
   local gearbox  = profile.gearbox
-  local tyre     = TireData[profile.tyre]
+  local tyreMaxG = 1.10 -- Default fallback (Street) since TireData was removed
   local weight   = profile.weight
 
   -- Power rating (0–100)
@@ -28,7 +28,7 @@ local function CalculatePP(profile, isTuned, turboOverride)
   local accRating = math.min(100, ptw * 35)
 
   -- Handling/Grip rating (0–100)
-  local gripRating = math.min(100, tyre.max_g * 50)
+  local gripRating = math.min(100, tyreMaxG * 50)
 
   -- PP = weighted sum
   local pp = (powerRating * 0.30) +

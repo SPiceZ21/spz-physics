@@ -50,9 +50,6 @@ VehData["sultan"] = {
     lag_factor      = 0.35,            -- turbo lag (0=instant, 1=very laggy)
   },
 
-  -- ── Tyres ─────────────────────────────────────────────────────────
-  tyre = "sport",                      -- references tiredata.lua compound
-  -- Valid compounds: "street" | "sport" | "semi_slick" | "slick" | "wet"
 
   -- ── Differential ──────────────────────────────────────────────────
   differential = {

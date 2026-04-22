@@ -45,7 +45,6 @@ GlobalVehData = {
         lag_factor      = 0.0,
     },
 
-    tyre         = "street",
 
     differential = {
         type           = "Open",

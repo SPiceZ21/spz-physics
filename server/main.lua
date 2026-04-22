@@ -26,10 +26,7 @@ exports("GetPP", function(vehicleModel, isTuned, turboOverride)
         return nil 
     end
 
-    -- Process strings to tables for engine/tyre if necessary
-    -- Actually in VehData, tyre is a string (e.g. "sport"). 
-    -- pp.lua expects profile to remain as-is since it queries TireData[profile.tyre]
-    
+    -- Calculate Performance Points
     local ppData = SPZPP.CalculatePP(profile, isTuned, turboOverride)
     if ppData then
         ppData.class = GetClassFromPP(ppData.pp)
