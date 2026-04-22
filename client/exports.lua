@@ -32,10 +32,7 @@ exports("GetTurbo", function() return PhysicsState and PhysicsState.profile and 
 
 exports("GetTurboPressure", function() return PhysicsState and PhysicsState.boost_bar or 0.0 end)
 
-exports("GetTyre", function()
-    if not PhysicsState or not PhysicsState.profile then return {} end
-    return TireData and TireData[PhysicsState.profile.tyre] or {}
-end)
+exports("GetTyre", function() return {} end) -- Removed
 
 exports("GetDifferential", function() return PhysicsState and PhysicsState.profile and PhysicsState.profile.differential or {} end)
 
@@ -117,12 +114,7 @@ exports("SetEngineSwap", function(sourceOverride, engineId)
     TriggerEvent("SPZ:physics:engineSwapped", id)
 end)
 
-exports("SetTyreCompound", function(sourceOverride, compound)
-    local c = compound or sourceOverride
-    if PhysicsState and PhysicsState.profile then
-        PhysicsState.profile.tyre = c
-    end
-end)
+exports("SetTyreCompound", function() end) -- Removed
 
 exports("SetAWDSplit", function(sourceOverride, frontBias)
     local bias = frontBias or sourceOverride

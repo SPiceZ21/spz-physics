@@ -46,10 +46,7 @@ local function _buildPayload(vehicle, state)
         susp[i + 1] = GetVehicleWheelSuspensionCompression(vehicle, i)
     end
 
-    -- Tire temps / wear
-    local temps = SPZThermals.GetTemps()
-    local wear  = SPZThermals.GetWear()
-    local blown = SPZThermals.GetBlown()
+    -- Tire temps / wear removed
 
     -- Steering angle (Native returns degrees, usually -40 to 40)
     local steerAngle = GetVehicleSteeringAngle(vehicle)
@@ -93,11 +90,7 @@ local function _buildPayload(vehicle, state)
         throttle    = math.floor(throttle * 100),
         brake       = math.floor(brake    * 100),
 
-        -- Tire thermals
-        tempFL      = math.floor(temps[1] * 10) / 10,
-        tempFR      = math.floor(temps[2] * 10) / 10,
-        tempRL      = math.floor(temps[3] * 10) / 10,
-        tempRR      = math.floor(temps[4] * 10) / 10,
+        -- Tire thermals removed
 
         -- Road
         wetness     = math.floor(wetness * 100),

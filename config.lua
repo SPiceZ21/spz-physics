@@ -3,7 +3,7 @@ Config = {}
 
 -- ── Physics tick ──────────────────────────────────────────────────────────
 Config.TickRate         = 0            -- 0 = every frame, set higher to reduce load
-Config.GlobalTorqueMultiplier = 1.65   -- overall boost to all vehicles
+Config.GlobalTorqueMultiplier = 1.75   -- overall boost to all vehicles
 
 -- ── Assists ───────────────────────────────────────────────────────────────
 Config.TCSSlipThreshold = 0.25         -- wheel speed delta to trigger TCS
@@ -209,7 +209,7 @@ Config.Aero = {
     downforceEnabled        = true,
     downforceMinSpeedMs     = 12.0, -- m/s (~43 km/h) — aero effect starts
     downforceMaxSpeedMs     = 60.0, -- m/s (~216 km/h) — full downforce reached
-    downforceGripBonus      = 0.18, -- maximum grip addition at full speed
+    downforceGripBonus      = 0.22, -- maximum grip addition at full speed
 
     -- Slipstream / drafting (forward push behind a lead vehicle)
     slipstreamEnabled       = true,

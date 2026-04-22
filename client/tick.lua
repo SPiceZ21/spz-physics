@@ -48,8 +48,7 @@ CreateThread(function()
             SPZSurface.Scan(vehicle, SPZRoad.GetWetness())
 
             -- ─── 2. Tire Thermals ────────────────────────────────────────────
-            SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, latAccel, dt)
-            local thermalGripMod = SPZThermals.GetGripMod()  -- used by grip pipeline
+            local thermalGripMod = 1.0  -- used by grip pipeline
 
             -- ─── 3. Aerodynamics ─────────────────────────────────────────────
             -- Returns downforce grip bonus; also applies slipstream impulse
@@ -117,10 +116,7 @@ CreateThread(function()
             SetVehicleEngineTorqueMultiplier(vehicle, math.max(0.0, finalTorque))
 
             -- ─── 11. Tyre Lateral Grip (Compound Slip-Angle Model) ───────────
-            -- This overwrites fTractionCurveMax/Min from the compound slip curve;
-            -- SPZGrip has already set the environmental multiplier above so we
-            -- pass finalGripMult as a scale factor into ApplyTyrePhysics.
-            SPZTyre.ApplyTyrePhysics(vehicle, profile, speed)
+            -- This stage removed.
 
             -- ─── 12. Telemetry ───────────────────────────────────────────────
             SPZTelemetry.Tick(vehicle, PhysicsState)
@@ -152,7 +148,6 @@ AddEventHandler("SPZ:physics:unloaded", function()
         SPZDamage.Reset(vehicle)
     end
     SPZSurface.Reset()
-    SPZThermals.Reset()
     SPZAero.Reset()
     SPZTelemetry.Reset()
 end)

@@ -15,7 +15,6 @@ shared_scripts {
   'config.lua',
   'data/globalvehdata.lua',
   'data/enginedata.lua',
-  'data/tiredata.lua',
   'data/engineswap.lua',
   'data/vehdata.lua',
   'shared/pp.lua',
@@ -32,7 +31,6 @@ client_scripts {
   'client/road.lua',
 
   -- Per-vehicle physics modules
-  'client/thermals.lua',
   'client/grip.lua',
   'client/damage.lua',
   'client/performance.lua',
@@ -45,7 +43,6 @@ client_scripts {
   'client/flywheel.lua',
 
   -- Handling geometry
-  'client/tyre.lua',
   'client/differential.lua',
   'client/swaybar.lua',
 

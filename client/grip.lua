@@ -6,8 +6,6 @@
 -- Pipeline stages (applied in order):
 --   1.  Surface material grip (from SPZSurface)
 --   2.  Road wetness / weather penalty (from SPZRoad)
---   3.  Tire compound base grip (from TireData via profile.tyre)
---   4.  Tire thermal modifier (from SPZThermals)
 --   5.  Aerodynamic downforce bonus (from SPZAero — if loaded)
 --   6.  Vehicle damage penalty (from SPZDamage)
 --   7.  Vehicle class off-road penalty
@@ -28,6 +26,9 @@ local OFFROAD_CLASSES <const> = { [1]=true, [6]=true, [7]=true, [9]=true }
 
 -- Minimum final grip multiplier (even in the worst combined conditions)
 local GRIP_FLOOR <const> = 0.12
+
+-- 5% Global arcade grip boost
+local ARCADE_BOOST <const> = 1.05
 
 -- ---------------------------------------------------------------------------
 -- Internal: cache original handling floats for a vehicle so we can restore
@@ -68,15 +69,12 @@ function SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
     local roadMod = SPZRoad.GetCombinedGripMod()  -- 0.3–1.0
 
     -- ── Stage 3: Tire compound base peak grip ───────────────────────────────
-    local compound = TireData[profile.tyre] or TireData["street"]
-    local compoundPeak = compound.max_g or 1.0  -- lateral G peak
-
-    -- Normalise: stock GTA grip = 1.0, convert compound max_g to a multiplier
-    -- Street tires (max_g ≈ 1.10) → ~1.0x, Slick (max_g ≈ 2.0) → ~1.82x
-    local compoundMult = compoundPeak / 1.10
+    -- Removed.
+    local compoundMult = 1.0
 
     -- ── Stage 4: Thermal modifier ────────────────────────────────────────────
-    local thermalMod = SPZThermals.GetGripMod()  -- 0–1
+    -- Removed.
+    local thermalMod = 1.0
 
     -- ── Stage 5: Aero downforce bonus (additive) ─────────────────────────────
     local aeroBonus = aeroGripBonus or 0.0
@@ -92,7 +90,7 @@ function SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
     local classMod   = offRoadSurf and (1.0 + classBonus) or 1.0
 
     -- ── Assemble multiplicative chain ────────────────────────────────────────
-    local combinedMult = surfaceRatio * roadMod * compoundMult * thermalMod * damageMod * classMod
+    local combinedMult = surfaceRatio * roadMod * compoundMult * thermalMod * damageMod * classMod * ARCADE_BOOST
 
     -- ── Stage 8: Hard floor on dry tarmac (road cars never worse than stock) ──
     local isDryTarmac = surfaceGrip >= TARMAC_REFERENCE and SPZRoad.GetWetness() < 0.05
@@ -105,7 +103,7 @@ function SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
 
     -- ── Apply to handling floats ──────────────────────────────────────────────
     local newMax = math.max(GRIP_FLOOR, orig.tractionMax * finalMult)
-    local newMin = math.max(GRIP_FLOOR * 0.8, orig.tractionMin * finalMult)
+    local newMin = math.max(GRIP_FLOOR * 0.85, orig.tractionMin * finalMult) -- Increased from 0.8 to reduce sliding
 
     SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMax", newMax)
     SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMin", newMin)
