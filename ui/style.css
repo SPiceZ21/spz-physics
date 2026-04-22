@@ -1,0 +1,296 @@
+@font-face {
+    font-family: 'Panchang';
+    src: url('public/fonts/Panchang-Bold.ttf') format('truetype');
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('public/fonts/Panchang-Regular.ttf') format('truetype');
+    font-weight: 400;
+}
+
+:root {
+    --accent: #FF6200;
+    --accent-glow: rgba(255, 98, 0, 0.4);
+    --bg-dark: rgba(10, 15, 20, 0.95);
+    --border: rgba(255, 255, 255, 0.1);
+    --text-dim: rgba(255, 255, 255, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+#telemetry-container {
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    width: 320px;
+}
+
+.glass-panel {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border-left: 4px solid var(--accent);
+}
+
+/* Header */
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+}
+
+.brand {
+    font-family: 'Panchang', sans-serif;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.brand .accent { color: var(--accent); }
+
+.page-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+#category-title { color: var(--text-dim); text-transform: uppercase; }
+#page-indicator { color: var(--accent); }
+
+/* Labels & Values */
+.label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.val {
+    font-family: 'Panchang', sans-serif;
+    font-size: 1rem;
+    color: white;
+}
+
+.val.large { font-size: 1.8rem; color: var(--accent); }
+
+/* PAGE 1: Car Layout */
+.car-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin: 20px 0;
+}
+
+.axle {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 40px;
+    position: relative;
+}
+
+.axle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 70px;
+    right: 70px;
+    height: 1px;
+    background: var(--border);
+}
+
+.wheel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.temp {
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.tire-status {
+    width: 22px;
+    height: 44px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.susp-track {
+    width: 22px;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.susp-fill {
+    height: 100%;
+    width: 50%;
+    background: var(--accent);
+}
+
+.chassis-center {
+    display: flex;
+    justify-content: center;
+}
+
+.steer-display {
+    text-align: center;
+}
+
+.steer-label { font-size: 0.6rem; color: var(--text-dim); font-weight: 800; }
+.steer-val { font-family: 'Panchang', sans-serif; font-size: 0.9rem; }
+
+.stats-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.stat-item { display: flex; flex-direction: column; gap: 2px; }
+
+/* PAGE 2: Engine Grid */
+.engine-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.data-block {
+    background: rgba(255,255,255,0.03);
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-meters {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.meter-bg {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.throttle { background: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+.brake { background: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+.boost { background: #3498db; box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
+
+.health-meters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* PAGE 3: G-Force */
+.g-meter-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.g-circle {
+    width: 180px;
+    height: 180px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    position: relative;
+    background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
+}
+
+.g-grid-v, .g-grid-h {
+    position: absolute;
+    background: var(--border);
+}
+
+.g-grid-v { left: 50%; top: 0; bottom: 0; width: 1px; }
+.g-grid-h { top: 50%; left: 0; right: 0; height: 1px; }
+
+.g-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 15px var(--accent-glow);
+    z-index: 10;
+    top: 50%;
+    left: 50%;
+}
+
+.g-ghost-container {
+    position: absolute;
+    inset: 0;
+}
+
+.g-ghost-dot {
+    position: absolute;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.3;
+}
+
+.g-readout {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.g-stat { display: flex; flex-direction: column; align-items: center; }

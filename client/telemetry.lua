@@ -135,12 +135,36 @@ function SPZTelemetry.Tick(vehicle, state)
     _lastUpdate = now
 
     local payload = _buildPayload(vehicle, state)
+    
+    -- Local trigger for other scripts
     TriggerEvent("SPZ:telemetry:update", payload)
+
+    -- NUI update
+    if _visible then
+        SendNUIMessage({
+            action = "update",
+            data = payload
+        })
+    end
 end
 
 -- ---------------------------------------------------------------------------
--- Toggle / cycle key handlers
+-- Toggle / cycle key handlers & Commands
 -- ---------------------------------------------------------------------------
+RegisterCommand("telemetry", function()
+    local cfg = Config.Telemetry
+    if not cfg.enabled then return end
+
+    _visible = not _visible
+    
+    SendNUIMessage({
+        action = "toggle",
+        show = _visible
+    })
+
+    TriggerEvent("SPZ:telemetry:toggle", _visible)
+end, false)
+
 CreateThread(function()
     while true do
         Wait(0)
@@ -149,13 +173,19 @@ CreateThread(function()
 
         -- Toggle visibility
         if IsControlJustPressed(0, cfg.toggleKey) then
-            _visible = not _visible
-            TriggerEvent("SPZ:telemetry:toggle", _visible)
+            ExecuteCommand("telemetry")
         end
 
-        -- Cycle display mode
+        -- Cycle display mode (Pages)
         if _visible and IsControlJustPressed(0, cfg.cycleKey) then
             _modeIndex = (_modeIndex % #MODES) + 1
+            
+            SendNUIMessage({
+                action = "cycle",
+                mode = MODES[_modeIndex],
+                page = _modeIndex
+            })
+
             TriggerEvent("SPZ:telemetry:mode", MODES[_modeIndex])
         end
 
