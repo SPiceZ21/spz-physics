@@ -72,26 +72,28 @@ local function _tempGripMod(temp)
     return 1.0
 end
 
+local _lastLoadTime = 0
+
+function SPZThermals.Reset()
+    _init()
+    _lastLoadTime = GetGameTimer()
+end
+
 -- ---------------------------------------------------------------------------
 -- Public: update all wheel temperatures.
--- vehicle       — entity handle
--- drivetrain    — "FWD" | "RWD" | "AWD"
--- speed         — vehicle speed in m/s
--- throttle      — 0–1 input
--- brake         — 0–1 input
--- lateralG      — lateral G-force (unsigned)
--- dt            — seconds elapsed
 -- ---------------------------------------------------------------------------
 function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG, dt)
     local cfg    = Config.Thermals
     if not cfg.enabled then return end
 
-    local safeDt = math.min(dt, 0.2)  -- cap to 200ms to prevent spikes
+    -- Safety: Prevent instant pops on spawn/loading (2 second window)
+    local gracePeriod = (GetGameTimer() - _lastLoadTime) < 2000
+
+    local safeDt = math.min(dt, 0.2)
     local driven = _getDrivenSet(drivetrain)
     local drivenSet = {}
     for _, idx in ipairs(driven) do drivenSet[idx] = true end
 
-    -- Measure wheel speeds for slip detection
     local vehSpeedMs = speed
     local brakeHeat  = brake > 0.4 and (brake * cfg.brakeHeatRate * safeDt) or 0.0
     local cornerHeat = lateralG > 0.3 and (lateralG * cfg.cornerHeatRate * safeDt) or 0.0
@@ -99,33 +101,31 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
     for i = 1, WHEEL_COUNT do
         if _blown[i] then goto continue end
 
-        local wheelSpd = GetVehicleWheelSpeed(vehicle, i - 1) -- GTA index 0-based
+        local wheelSpd = GetVehicleWheelSpeed(vehicle, i - 1)
+        
+        -- Sanity check: If wheel speed is nonsensical (spawn glitch), ignore it
+        if not wheelSpd or wheelSpd > 200.0 then wheelSpd = vehSpeedMs end
+
         local slipRatio = 0.0
         if vehSpeedMs > 0.5 then
-            -- Clamp denominator to ≥10 m/s so low-speed launches don't spike temps instantly
             local denom = math.max(vehSpeedMs, 10.0)
             slipRatio = math.min(1.0, math.abs(wheelSpd - vehSpeedMs) / denom)
         end
 
         -- Heat accumulation
         local slipHeat = slipRatio * cfg.slipHeatRate * safeDt
-        if not drivenSet[i] then slipHeat = slipHeat * 0.4 end  -- unpowered wheels slip less
+        if not drivenSet[i] then slipHeat = slipHeat * 0.4 end
 
-        local totalHeat = slipHeat
-            + brakeHeat
-            + cornerHeat
-            + (cfg.rollHeatRate * safeDt)
+        local totalHeat = slipHeat + brakeHeat + cornerHeat + (cfg.rollHeatRate * safeDt)
 
-        -- Cooling: radiation + airflow
+        -- Cooling
         local cooling = (cfg.radiationCool + speed * cfg.airflowCoolPerMs) * safeDt
         local ambient = cfg.ambientBaseTemp
 
-        -- Temperature update — approach ambient from below when cool
-        _temp[i] = _temp[i] + totalHeat - cooling
-        _temp[i] = math.max(ambient, math.min(cfg.maxCapTemp, _temp[i]))
+        _temp[i] = math.max(ambient, math.min(cfg.maxCapTemp, _temp[i] + totalHeat - cooling))
 
-        -- Blowout check
-        if _temp[i] >= cfg.blowoutThreshold then
+        -- Blowout check (Disabled during grace period)
+        if not gracePeriod and _temp[i] >= cfg.blowoutThreshold then
             _blown[i] = true
             SetVehicleTyreBurst(vehicle, i - 1, true, 1000.0)
             TriggerEvent("SPZ:physics:tyreBlow", i)
@@ -138,8 +138,7 @@ function SPZThermals.Tick(vehicle, drivetrain, speed, throttle, brake, lateralG,
 
         _wear[i] = math.min(1.0, _wear[i] + wearSlip + wearBrake + wearDist)
 
-        -- Fully worn tires have reduced grip (handled in GetGripMod)
-        if _wear[i] >= 1.0 and not _blown[i] then
+        if not gracePeriod and _wear[i] >= 1.0 and not _blown[i] then
             _blown[i] = true
             SetVehicleTyreBurst(vehicle, i - 1, true, 1000.0)
             TriggerEvent("SPZ:physics:tyreBlow", i)
