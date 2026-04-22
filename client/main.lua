@@ -33,9 +33,10 @@ local function LoadVehicleProfile(vehicle)
     PhysicsState.pp = ppData.pp
     PhysicsState.top_speed = ppData.top_speed
 
-    -- Apply static handling adjustments (swaybars, diff split)
-    SPZSwaybar.ApplySwaybars(vehicle, profile)
-    SPZDifferential.UpdateDifferential(vehicle, profile)
+    -- Reset all subsystems for the new vehicle
+    SPZThermals.Reset()
+    SPZDamage.Reset(vehicle)
+    SPZAero.Reset()
     
     -- Notify system
     TriggerEvent("SPZ:physics:loaded", modelName, profile)

@@ -165,6 +165,21 @@ RegisterCommand("telemetry", function()
     TriggerEvent("SPZ:telemetry:toggle", _visible)
 end, false)
 
+RegisterCommand("telepage", function()
+    local cfg = Config.Telemetry
+    if not cfg.enabled or not _visible then return end
+
+    _modeIndex = (_modeIndex % #MODES) + 1
+    
+    SendNUIMessage({
+        action = "cycle",
+        mode = MODES[_modeIndex],
+        page = _modeIndex
+    })
+
+    TriggerEvent("SPZ:telemetry:mode", MODES[_modeIndex])
+end, false)
+
 CreateThread(function()
     while true do
         Wait(0)
@@ -178,15 +193,7 @@ CreateThread(function()
 
         -- Cycle display mode (Pages)
         if _visible and (IsDisabledControlJustPressed(0, cfg.cycleKey) or IsControlJustPressed(0, cfg.cycleKey)) then
-            _modeIndex = (_modeIndex % #MODES) + 1
-            
-            SendNUIMessage({
-                action = "cycle",
-                mode = MODES[_modeIndex],
-                page = _modeIndex
-            })
-
-            TriggerEvent("SPZ:telemetry:mode", MODES[_modeIndex])
+            ExecuteCommand("telepage")
         end
 
         ::continue::
