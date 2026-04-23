@@ -16,6 +16,7 @@ SPZGrip = {}
 
 -- Cache of original handling values per entity (keyed by vehicle entity)
 local _origCache = {}
+local _appliedCache = {}
 
 -- Reference surface grip coefficient (dry tarmac) used to normalise the
 -- surface grip into a ratio that can be blended with compound values.
@@ -105,8 +106,17 @@ function SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
     local newMax = math.max(GRIP_FLOOR, orig.tractionMax * finalMult)
     local newMin = math.max(GRIP_FLOOR * 0.85, orig.tractionMin * finalMult) -- Increased from 0.8 to reduce sliding
 
-    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMax", newMax)
-    SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMin", newMin)
+    if not _appliedCache[vehicle] then _appliedCache[vehicle] = {} end
+
+    if not _appliedCache[vehicle].fTractionCurveMax or math.abs(_appliedCache[vehicle].fTractionCurveMax - newMax) > 0.05 then
+        SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMax", newMax)
+        _appliedCache[vehicle].fTractionCurveMax = newMax
+    end
+
+    if not _appliedCache[vehicle].fTractionCurveMin or math.abs(_appliedCache[vehicle].fTractionCurveMin - newMin) > 0.05 then
+        SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionCurveMin", newMin)
+        _appliedCache[vehicle].fTractionCurveMin = newMin
+    end
 
     return finalMult
 end
@@ -123,9 +133,11 @@ function SPZGrip.Restore(vehicle)
         SetVehicleHandlingFloat(vehicle, "CHandlingData", "fTractionLossMult",  orig.tractionLoss)
     end
     _origCache[vehicle] = nil
+    _appliedCache[vehicle] = nil
 end
 
 -- Purge entire cache (resource stop)
 function SPZGrip.Reset()
     _origCache = {}
+    _appliedCache = {}
 end

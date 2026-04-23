@@ -9,6 +9,7 @@ SPZPerformance = {}
 
 -- Per-vehicle cached originals keyed by entity handle
 local _originals = {}
+local _applied = {}
 
 -- ---------------------------------------------------------------------------
 -- Internal: cache the original handling floats we intend to modify
@@ -62,7 +63,15 @@ function SPZPerformance.Apply(vehicle, lateralAccel, longAccel, speed)
     local o   = _originals[vehicle]
     local cfg = Config.Performance
 
-    local function sf(k, v) SetVehicleHandlingFloat(vehicle, "CHandlingData", k, v) end
+    if not _applied[vehicle] then _applied[vehicle] = {} end
+
+    local function sf(k, v) 
+        -- Delta check: prevents Havok re-init spam which causes wheels to disappear and vehicle to face North
+        if not _applied[vehicle][k] or math.abs(_applied[vehicle][k] - v) > 0.05 then
+            SetVehicleHandlingFloat(vehicle, "CHandlingData", k, v)
+            _applied[vehicle][k] = v
+        end
+    end
 
     -- Health readings
     local engineHP  = GetVehicleEngineHealth(vehicle)
@@ -126,8 +135,10 @@ function SPZPerformance.Restore(vehicle)
     sf("fCamberStiffnesss",         o.cambFront)
     sf("fTractionBiasFront",        o.tractionFront)
     _originals[vehicle] = nil
+    _applied[vehicle] = nil
 end
 
 function SPZPerformance.Reset()
     _originals = {}
+    _applied = {}
 end
