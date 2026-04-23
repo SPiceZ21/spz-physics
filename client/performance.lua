@@ -81,16 +81,8 @@ function SPZPerformance.Apply(vehicle, lateralAccel, longAccel, speed)
     end
 
     -- ── Suspension / body degradation ──────────────────────────────────
-    if bodyDmgFrac > 0.0 then
-        local newSpring = o.suspSpringStrg * _lerp(1.0, 1.0 - cfg.suspStiffnessPenalty, bodyDmgFrac)
-        local newDamp   = o.suspDamping   * _lerp(1.0, 1.0 - cfg.suspDampingPenalty,   bodyDmgFrac)
-        sf("fSuspensionSpringStrength",    newSpring)
-        sf("fSuspensionDampingCompress",   newDamp)
-
-        -- Camber misalignment grows with structural damage
-        local camberShift = cfg.maxCamberShift * bodyDmgFrac
-        sf("fCamberStiffnesss", o.cambFront + camberShift)
-    end
+    -- Modifying suspension spring/damping dynamically causes NaN physics bugs
+    -- during collisions, so we no longer apply damage penalties to them.
 
     -- ── Steering lock reduction (speed-dependent + damage) ──────────────
     do
@@ -108,28 +100,9 @@ function SPZPerformance.Apply(vehicle, lateralAccel, longAccel, speed)
         sf("fBrakeBiasFront",  math.min(0.90, newBias))
     end
 
-    -- ── Active geometry (dynamic per-frame adjustments) ─────────────────
-    -- These simulate suspension geometry changes under load.
-    local vehClass   = GetVehicleClass(vehicle)
-    local isCar      = vehClass ~= 8 and vehClass ~= 13  -- not bikes or boats
-
-    if isCar then
-        -- Brake dive: front compresses under hard braking → negative camber front
-        local brakeDiveMod = longAccel < -1.0 and
-            math.min(0.12, math.abs(longAccel) * cfg.brakeDiveCamber) or 0.0
-
-        -- Acceleration squat: rear compresses under hard power → adjusts rear camber
-        local accelSquatMod = longAccel > 1.5 and
-            math.min(0.08, longAccel * cfg.accelSquatCamber) or 0.0
-
-        -- Cornering load transfer
-        local cornerMod = lateralAccel > 2.0 and
-            math.min(0.10, lateralAccel * cfg.cornerCamberLoad) or 0.0
-
-        local baseCamber = _originals[vehicle].cambFront
-        local dmgCamber  = cfg.maxCamberShift * bodyDmgFrac
-        sf("fCamberStiffnesss", baseCamber + dmgCamber + brakeDiveMod + cornerMod - accelSquatMod)
-    end
+    -- Active geometry (dynamic per-frame adjustments)
+    -- Modifying fCamberStiffnesss based on acceleration causes NaN physics bugs
+    -- during collisions due to Havok solver instability. Removed for stability.
 end
 
 -- ---------------------------------------------------------------------------
