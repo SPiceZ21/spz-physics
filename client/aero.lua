@@ -98,13 +98,19 @@ function SPZAero.Tick(vehicle, speed, dt)
         local forceMag  = proximity * cfg.slipstreamPeakForce * speed * dt
         _draftForce     = forceMag
 
-        -- Apply impulse in the vehicle's forward direction
-        local fwd = GetEntityForwardVector(vehicle)
-        local vel = GetEntityVelocity(vehicle)
-        SetEntityVelocity(vehicle,
-            vel.x + fwd.x * forceMag,
-            vel.y + fwd.y * forceMag,
-            vel.z)
+        -- Apply impulse in the vehicle's forward direction using ApplyForceToEntity
+        -- to prevent Havok NaN bugs and catastrophic orientation resets
+        -- forceType 1 = linear force
+        ApplyForceToEntity(vehicle, 1,
+            0.0, forceMag * 50.0, 0.0, -- x, y, z force (y is forward in local coords)
+            0.0, 0.0, 0.0,           -- offset
+            0,                       -- boneIndex
+            true,                    -- isRel (local coords)
+            true,                    -- ignoreUpVec
+            true,                    -- isMultByMass
+            false,                   -- p10
+            true                     -- p11
+        )
     else
         _draftForce = 0.0
     end

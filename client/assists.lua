@@ -51,6 +51,7 @@ end
 local _absPulse = false
 local _absPulseTimer = 0
 local ABS_PULSE_MS = 80  -- toggle brake pressure every 80ms
+local _lastPressure = {}
 
 local function UpdateABS(vehicle, profile, brake)
     if not PhysicsState or not PhysicsState.abs_enabled then return false end
@@ -72,7 +73,12 @@ local function UpdateABS(vehicle, profile, brake)
             end
             -- Alternate between full brake and reduced pressure to simulate ABS pulse
             local pressure = _absPulse and brake or (brake * 0.25)
-            SetVehicleWheelBrakePressure(vehicle, i, pressure)
+            
+            if not _lastPressure[vehicle] then _lastPressure[vehicle] = {} end
+            if _lastPressure[vehicle][i] ~= pressure then
+                SetVehicleWheelBrakePressure(vehicle, i, pressure)
+                _lastPressure[vehicle][i] = pressure
+            end
         end
     end
 

@@ -8,6 +8,7 @@
 -- dt is computed from real elapsed time so physics are frame-rate independent.
 
 local _lastFrameTime = GetGameTimer()
+local _lastTorqueMult = 0.0
 
 CreateThread(function()
     while true do
@@ -41,30 +42,26 @@ CreateThread(function()
             local latAccel  = math.abs(right.x * vel.x + right.y * vel.y + right.z * vel.z)
 
             -- ─── 1. Environment ─────────────────────────────────────────────
-            -- Road wetness accumulates / decays based on active weather
-            SPZRoad.Tick(dt)
-
-            -- Surface material grip (per wheel raycasts at configured interval)
-            SPZSurface.Scan(vehicle, SPZRoad.GetWetness())
+            -- Removed per request
+            -- SPZRoad.Tick(dt)
+            -- SPZSurface.Scan(vehicle, SPZRoad.GetWetness())
 
             -- ─── 2. Tire Thermals ────────────────────────────────────────────
-            local thermalGripMod = 1.0  -- used by grip pipeline
+            -- Removed per request
 
             -- ─── 3. Aerodynamics ─────────────────────────────────────────────
-            -- Returns downforce grip bonus; also applies slipstream impulse
-            local aeroGripBonus = SPZAero.Tick(vehicle, speed, dt)
+            -- Removed per request
+            -- local aeroGripBonus = SPZAero.Tick(vehicle, speed, dt)
 
             -- ─── 4. Damage & Performance Degradation ─────────────────────────
-            SPZDamage.Tick(vehicle, PhysicsState.rpm, profile, speed, dt)
-            local damageGripMod = SPZDamage.GetGripMod(vehicle)
-
-            -- Geometry / handling float penalties from structural damage
-            SPZPerformance.Apply(vehicle, latAccel, longAccel, speed)
+            -- Removed per request
+            -- SPZDamage.Tick(vehicle, PhysicsState.rpm, profile, speed, dt)
+            -- SPZPerformance.Apply(vehicle, latAccel, longAccel, speed)
 
             -- ─── 5. Grip Application Pipeline ────────────────────────────────
-            -- Assembles: surface × weather × compound × thermals × aero × damage
-            local finalGripMult = SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
-            PhysicsState.grip_mult = finalGripMult
+            -- Removed per request: This completely stops SetVehicleHandlingFloat spam
+            -- local finalGripMult = SPZGrip.Apply(vehicle, profile, aeroGripBonus, damageGripMod)
+            PhysicsState.grip_mult = 1.0
 
             -- ─── 6. Engine (RPM + Power Curve) ──────────────────────────────
             local rawRpm = profile.engine.rpm_min
@@ -113,16 +110,53 @@ CreateThread(function()
                               * escMult
                               * (lcMult     or 1.0)
                               * (Config.GlobalTorqueMultiplier or 1.0)
-            SetVehicleEngineTorqueMultiplier(vehicle, math.max(0.0, finalTorque))
+                              
+            local finalTorqueCapped = math.max(0.0, finalTorque)
+            if math.abs(_lastTorqueMult - finalTorqueCapped) > 0.05 then
+                SetVehicleEngineTorqueMultiplier(vehicle, finalTorqueCapped)
+                _lastTorqueMult = finalTorqueCapped
+            end
 
             -- ─── 11. Tyre Lateral Grip (Compound Slip-Angle Model) ───────────
             -- This stage removed.
 
             -- ─── 12. Telemetry ───────────────────────────────────────────────
-            SPZTelemetry.Tick(vehicle, PhysicsState)
+            -- Removed per request
+            -- SPZTelemetry.Tick(vehicle, PhysicsState)
 
             -- ─── 13. Statebag sync (for HUD) ────────────────────────────────
-            SyncPhysicsStateToBag(PhysicsState)
+            -- Removed per request
+            -- SyncPhysicsStateToBag(PhysicsState)
+
+            -- ─── 14. Havok Engine Debug Overlay ──────────────────────────────
+            if Config.DebugOverlay then
+                local wSpd0 = GetVehicleWheelSpeed(vehicle, 0)
+                local wSpd1 = GetVehicleWheelSpeed(vehicle, 1)
+                local wSpd2 = GetVehicleWheelSpeed(vehicle, 2)
+                local wSpd3 = GetVehicleWheelSpeed(vehicle, 3)
+                
+                local sus0 = GetVehicleWheelSuspensionCompression(vehicle, 0)
+                local sus1 = GetVehicleWheelSuspensionCompression(vehicle, 1)
+                local sus2 = GetVehicleWheelSuspensionCompression(vehicle, 2)
+                local sus3 = GetVehicleWheelSuspensionCompression(vehicle, 3)
+                
+                SetTextFont(0)
+                SetTextProportional(1)
+                SetTextScale(0.0, 0.35)
+                SetTextColour(255, 255, 255, 255)
+                SetTextDropshadow(0, 0, 0, 0, 255)
+                SetTextEdge(1, 0, 0, 0, 255)
+                SetTextDropShadow()
+                SetTextOutline()
+                BeginTextCommandDisplayText("STRING")
+                AddTextComponentSubstringPlayerName(string.format("~y~Havok Physics Debug~w~\nSpeed: %.2f m/s\nRPM: %d\nTorque Mult: %.2f\nWheels Spd: FL:%.2f FR:%.2f RL:%.2f RR:%.2f\nSuspension: FL:%.2f FR:%.2f RL:%.2f RR:%.2f\nAssists: TCS:%s ABS:%s ESC:%s LC:%s", 
+                    speed, PhysicsState.rpm, finalTorqueCapped,
+                    wSpd0, wSpd1, wSpd2, wSpd3,
+                    sus0, sus1, sus2, sus3,
+                    tostring(tcsActive), tostring(absActive), tostring(escActive), tostring(lcActive)
+                ))
+                EndTextCommandDisplayText(0.02, 0.4)
+            end
 
             Wait(Config.TickRate or 0)
         else
@@ -130,7 +164,7 @@ CreateThread(function()
             local now2 = GetGameTimer()
             local dt2  = math.min((now2 - _lastFrameTime) / 1000.0, 1.0)
             _lastFrameTime = now2
-            SPZRoad.Tick(dt2)
+            -- SPZRoad.Tick(dt2) -- Disabled
             Wait(500)
         end
         ::continue::
@@ -143,11 +177,11 @@ end)
 AddEventHandler("SPZ:physics:unloaded", function()
     local vehicle = PhysicsState and PhysicsState.vehicle
     if vehicle then
-        SPZGrip.Restore(vehicle)
-        SPZPerformance.Restore(vehicle)
-        SPZDamage.Reset(vehicle)
+        -- SPZGrip.Restore(vehicle)
+        -- SPZPerformance.Restore(vehicle)
+        -- SPZDamage.Reset(vehicle)
     end
-    SPZSurface.Reset()
-    SPZAero.Reset()
+    -- SPZSurface.Reset()
+    -- SPZAero.Reset()
     SPZTelemetry.Reset()
 end)
