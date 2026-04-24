@@ -8,7 +8,6 @@
 -- dt is computed from real elapsed time so physics are frame-rate independent.
 
 local _lastFrameTime = GetGameTimer()
-local _lastTorqueMult = 0.0
 
 CreateThread(function()
     while true do
@@ -112,9 +111,9 @@ CreateThread(function()
                               * (Config.GlobalTorqueMultiplier or 1.0)
                               
             local finalTorqueCapped = math.max(0.0, finalTorque)
-            if math.abs(_lastTorqueMult - finalTorqueCapped) > 0.05 then
+            if not PhysicsState.lastTorque or math.abs(PhysicsState.lastTorque - finalTorqueCapped) > 0.02 then
                 SetVehicleEngineTorqueMultiplier(vehicle, finalTorqueCapped)
-                _lastTorqueMult = finalTorqueCapped
+                PhysicsState.lastTorque = finalTorqueCapped
             end
 
             -- ─── 11. Tyre Lateral Grip (Compound Slip-Angle Model) ───────────
@@ -125,8 +124,7 @@ CreateThread(function()
             -- SPZTelemetry.Tick(vehicle, PhysicsState)
 
             -- ─── 13. Statebag sync (for HUD) ────────────────────────────────
-            -- Removed per request
-            -- SyncPhysicsStateToBag(PhysicsState)
+            SyncPhysicsStateToBag(PhysicsState)
 
             -- ─── 14. Havok Engine Debug Overlay ──────────────────────────────
             if Config.DebugOverlay then

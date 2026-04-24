@@ -53,20 +53,28 @@ end
 
 -- Monitor vehicle entry/exit
 CreateThread(function()
-    local inVehicle = false
+    local currentVehicle = 0
     
     while true do
         local ped = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(ped, false)
         
-        if vehicle ~= 0 and GetPedInVehicleSeat(vehicle, -1) == ped then
-            if not inVehicle then
-                inVehicle = true
+        -- We only care about being the driver
+        local isDriver = (vehicle ~= 0) and (GetPedInVehicleSeat(vehicle, -1) == ped)
+
+        if isDriver then
+            if vehicle ~= currentVehicle then
+                -- Either entered a new vehicle or the current one was swapped/re-spawned
+                if currentVehicle ~= 0 then
+                    UnloadVehicleProfile()
+                end
+                
+                currentVehicle = vehicle
                 LoadVehicleProfile(vehicle)
             end
         else
-            if inVehicle then
-                inVehicle = false
+            if currentVehicle ~= 0 then
+                currentVehicle = 0
                 UnloadVehicleProfile()
             end
         end
