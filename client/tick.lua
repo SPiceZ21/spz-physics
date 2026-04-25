@@ -101,6 +101,13 @@ CreateThread(function()
             local escMult = escActive and 0.45 or 1.0
 
             -- ─── 10. Final Torque Multiplier ─────────────────────────────────
+            -- NOS Integration
+            local nosBoost = 1.0
+            local nosData = exports["spz-nos"]:GetNosData()
+            if nosData and nosData.isActive and nosData.mode == "nitro" then
+                nosBoost = nosData.flowRate + 1.0
+            end
+
             -- Nil-safe: a crashed subsystem returns nil → default to 1.0 (no cut)
             local finalTorque = (powerMult  or 1.0)
                               * (boostMult  or 1.0)
@@ -108,6 +115,7 @@ CreateThread(function()
                               * (tcsMult    or 1.0)
                               * escMult
                               * (lcMult     or 1.0)
+                              * nosBoost
                               * (Config.GlobalTorqueMultiplier or 1.0)
                               
             local finalTorqueCapped = math.max(0.0, finalTorque)
