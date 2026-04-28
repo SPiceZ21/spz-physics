@@ -3,7 +3,7 @@ game 'gta5'
 
 name 'spz-physics'
 description 'SPiceZ-Core — Full vehicle physics engine'
-version '1.5.0'
+version '1.5.1'
 author 'SPiceZ-Core'
 
 shared_scripts {
