@@ -5,122 +5,86 @@
 <br/>
 
 # spz-physics
+> Full vehicle physics engine · `v1.5.0`
 
-### Advanced Vehicle Physics Engine
+## Scripts
 
-*Full-fidelity vehicle physics overhaul for SPiceZ-Core. Replaces GTA V default handling with a custom simulation layer including real-time RPM, gearbox logic, turbo pressure, and active driver assists.*
+### Shared / Config
 
-<br/>
+| Side   | File                           | Purpose                                      |
+| ------ | ------------------------------ | -------------------------------------------- |
+| Shared | `@spz-lib/shared/main.lua`     | spz-lib shared utility import                |
+| Shared | `logger.lua`                   | Physics-scoped logger setup                  |
+| Shared | `math.lua`                     | Physics math helpers                         |
+| Shared | `shared/events.lua`            | Shared event name constants                  |
+| Shared | `shared/constants.lua`         | Physics constants (gravity, friction, etc.)  |
+| Shared | `config.lua`                   | Resource configuration and tuning            |
+| Shared | `data/globalvehdata.lua`       | Global vehicle physics data table            |
+| Shared | `data/enginedata.lua`          | Engine specification data                    |
+| Shared | `data/engineswap.lua`          | Engine swap compatibility data               |
+| Shared | `data/vehdata.lua`             | Per-vehicle physics overrides                |
+| Shared | `shared/pp.lua`                | Post-processing physics utilities            |
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-orange.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
-[![FiveM](https://img.shields.io/badge/FiveM-Compatible-orange?style=flat-square)](https://fivem.net)
-[![Status](https://img.shields.io/badge/Status-Beta-yellow?style=flat-square)]()
+### Client — Core
 
-</div>
+| Side   | File               | Purpose                                        |
+| ------ | ------------------ | ---------------------------------------------- |
+| Client | `main.lua`         | Entry point, tick registration                 |
+| Client | `helpers.lua`      | Shared client helper functions                 |
+| Client | `statebag.lua`     | State bag reads and writes                     |
 
----
+### Client — Surface & Road
 
-## Overview
+| Side   | File          | Purpose                              |
+| ------ | ------------- | ------------------------------------ |
+| Client | `surface.lua` | Surface material detection           |
+| Client | `road.lua`    | Road grip and surface mapping        |
 
-`spz-physics` replaces GTA V's simplified vehicle simulation with a per-frame physics engine. It runs custom logic on top of the base handling, modulating torque, grip, and RPM to create a "Gran Turismo" style driving feel.
+### Client — Handling
 
-**Key Features:**
-- **Custom RPM Engine**: Maps 0-1 native RPM to real numerical ranges with power curves and rev limiters.
-- **Gearbox Simulation**: Supports Sequential, Automatic, and Manual modes with shift delays and RPM matching.
-- **Turbo Simulation**: Dynamic boost pressure building, decay, and turbo lag based on compressor size.
-- **Tyre Model**: Lateral G slip-angle model that adjusts traction live based on driving intensity and compound.
-- **Active Assists**: Built-in Traction Control (TCS), Anti-lock Brakes (ABS), and Launch Control (LC).
-- **PP Rating System**: Performance Point calculation used for vehicle class gating (C/B/A/S).
-- **Telemetry Layer**: Pushes live data to statebags for HUD consumption and data logging.
+| Side   | File              | Purpose                              |
+| ------ | ----------------- | ------------------------------------ |
+| Client | `grip.lua`        | Tyre grip simulation                 |
+| Client | `damage.lua`      | Collision and damage effects         |
+| Client | `performance.lua` | Vehicle performance modifiers        |
+| Client | `aero.lua`        | Aerodynamic downforce simulation     |
 
----
+### Client — Drivetrain
 
-## Subsystems
+| Side   | File           | Purpose                              |
+| ------ | -------------- | ------------------------------------ |
+| Client | `engine.lua`   | Engine power and response            |
+| Client | `gearbox.lua`  | Gear shift logic and ratios          |
+| Client | `turbo.lua`    | Turbo boost and lag simulation       |
+| Client | `flywheel.lua` | Flywheel inertia effects             |
 
-| System | Role | Integration |
-|---|---|---|
-| **Engine** | RPM mapping & Power Curve | `SetVehicleEngineTorqueMultiplier` |
-| **Gearbox** | Shifting & Final Drive | `SetVehicleCurrentRpm` |
-| **Turbo** | Boost Pressure & Lag | Torque Bonus |
-| **Tyre** | Grip breakaway & Lateral G | `fTractionCurveMax` |
-| **Differential** | LSD & AWD Torque Split | `fDriveBiasFront` |
-| **Sway Bar** | Body Roll Resistance | `fAntiRollBarForce` |
-| **Assists** | TCS / ABS / ESC / LC | Torque/Brake Cuts |
+### Client — Chassis
 
----
+| Side   | File             | Purpose                              |
+| ------ | ---------------- | ------------------------------------ |
+| Client | `differential.lua` | Differential torque split          |
+| Client | `swaybar.lua`    | Anti-roll bar stiffness simulation   |
 
-## Dependencies
+### Client — Systems
 
-| Resource | Type | Role |
-|---|---|---|
-| `spz-lib` | Required | Logger, math utilities |
-| `spz-core` | Required | Event bus |
-| `spz-vehicles` | Required | Reads vehicle registry for initial PP/Class sync |
-
-```cfg
-ensure spz-lib
-ensure spz-core
-ensure spz-vehicles
-ensure spz-physics
-```
-
----
-
-## Telemetry (Statebags)
-
-Live physics values are pushed to `LocalPlayer.state` every frame. `spz-hud` consumes these for the speedometer.
-
-| Key | Type | Description |
-|---|---|---|
-| `physics:loaded` | bool | Whether a physics profile is active |
-| `physics:rpm` | number | Real-time engine RPM |
-| `physics:rpm_max` | number | Redline RPM |
-| `physics:gear` | number | Current gear (0=R, 1-N=Gears) |
-| `physics:boost` | number | Turbo pressure percentage (0.0-1.0) |
-| `physics:tcs_active`| bool | True if Traction Control is cutting power |
-| `physics:abs_active`| bool | True if ABS is pulsing brakes |
-| `physics:pp` | number | Calculated Performance Points |
-
----
-
-## Exports Reference
+| Side   | File            | Purpose                                        |
+| ------ | --------------- | ---------------------------------------------- |
+| Client | `assists.lua`   | Driver assist systems (ABS, TC, etc.)          |
+| Client | `engineswap.lua`| Apply engine swap data to vehicle              |
+| Client | `telemetry.lua` | Telemetry data broadcast for speedometer       |
+| Client | `exports.lua`   | Client-side export definitions                 |
+| Client | `tick.lua`      | Main per-frame physics update loop             |
 
 ### Server
-```lua
--- Fetch PP for a vehicle model (used by spz-vehicles)
-local ppData = exports["spz-physics"]:GetPP(modelName, isTuned)
 
--- Force assist states for a player (used by spz-races)
-exports["spz-physics"]:SetAssists(source, { tcs = true, abs = true })
-```
+| Side   | File              | Purpose                                        |
+| ------ | ----------------- | ---------------------------------------------- |
+| Server | `server/main.lua` | Server authority, state sync, exports          |
 
-### Client
-```lua
--- Get live engine data
-local rpm = exports["spz-physics"]:GetCurrentRPM()
+## Dependencies
+- spz-lib
+- spz-core
+- spz-vehicles
 
--- Set engine swap live
-exports["spz-physics"]:SetEngineSwap("2JZ-GTE")
-```
-
----
-
-## Configuration
-
-```lua
--- config.lua
-Config.TickRate         = 0       -- 0 = every frame (required for smooth physics)
-Config.TCSSlipThreshold = 0.25    -- speed delta before TCS triggers
-Config.TurboMultiplier  = 0.35    -- peak torque bonus from max boost
-Config.PPBrackets       = { ... } -- C/B/A/S point thresholds
-```
-
----
-
-<div align="center">
-
-*Part of the [SPiceZ-Core](https://github.com/SPiceZ21) ecosystem*
-
-**[Docs](https://github.com/SPiceZ21/spz-docs) · [Discord](https://discord.gg/) · [Issues](https://github.com/SPiceZ21/spz-physics/issues)**
-
-</div>
+## CI
+Built and released via `.github/workflows/release.yml` on push to `main`.
