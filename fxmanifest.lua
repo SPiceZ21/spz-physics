@@ -32,6 +32,8 @@ client_scripts {
 
   -- Per-vehicle physics modules
   'client/grip.lua',
+  'client/tyre.lua',
+  'client/thermals.lua',
   'client/damage.lua',
   'client/performance.lua',
   'client/aero.lua',
