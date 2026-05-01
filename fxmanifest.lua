@@ -64,16 +64,6 @@ client_scripts {
   'client/tick.lua',
 }
 
-ui_page 'ui/index.html'
-
-files {
-  'ui/index.html',
-  'ui/style.css',
-  'ui/script.js',
-  'ui/public/fonts/Panchang-Bold.ttf',
-  'ui/public/fonts/Panchang-Regular.ttf',
-}
-
 server_scripts {
   'server/main.lua',
 }

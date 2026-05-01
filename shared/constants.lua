@@ -9,7 +9,9 @@ SPZ.PPClassBrackets = {
 }
 
 function GetClassFromPP(pp)
-  for tier, bracket in pairs(SPZ.PPClassBrackets) do
+  local brackets = SPZ and SPZ.PPClassBrackets
+  if not brackets then return 0 end
+  for tier, bracket in pairs(brackets) do
     if pp >= bracket.min and pp <= bracket.max then
       return tier
     end
